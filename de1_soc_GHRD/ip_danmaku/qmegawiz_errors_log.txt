@@ -1,0 +1,10 @@
+
+
+/home/skyworks/DE1SoC-Danmaku/de1_soc_GHRD/ip_danmaku/feeder_pll.v
+
+Nov 30 11PM:58:05>: Error in CNX file format.
+
+Error messages are listed in file
+/home/skyworks/DE1SoC-Danmaku/de1_soc_GHRD/ip_danmaku/feeder_pll.cnxerr.
+
+Can't create the custom megafunction variation file(s)
