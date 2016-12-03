@@ -312,7 +312,7 @@
    dir="end" />
  <interface name="memory" internal="hps_0.memory" type="conduit" dir="end" />
  <interface
-   name="overlay_src"
+   name="overlay"
    internal="overlay_dma.st_source"
    type="avalon_streaming"
    dir="start" />

@@ -88,9 +88,9 @@
 			memory_mem_odt                         : out   std_logic;                                        -- mem_odt
 			memory_mem_dm                          : out   std_logic_vector(3 downto 0);                     -- mem_dm
 			memory_oct_rzqin                       : in    std_logic                     := 'X';             -- oct_rzqin
-			overlay_src_data                       : out   std_logic_vector(63 downto 0);                    -- data
-			overlay_src_valid                      : out   std_logic;                                        -- valid
-			overlay_src_ready                      : in    std_logic                     := 'X';             -- ready
+			overlay_data                           : out   std_logic_vector(63 downto 0);                    -- data
+			overlay_valid                          : out   std_logic;                                        -- valid
+			overlay_ready                          : in    std_logic                     := 'X';             -- ready
 			reset_reset_n                          : in    std_logic                     := 'X'              -- reset_n
 		);
 	end component soc_system;

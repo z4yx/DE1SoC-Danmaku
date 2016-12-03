@@ -217,6 +217,8 @@ module ghrd_top(
   wire [66:0] loanio2fpga;
   wire        fpga_clk_50;
   wire        hpd_o;
+  wire        overlay_valid, overlay_ready;
+  wire [63:0] overlay_data;
 // connection of internal logics
   assign LEDR[9:2] = fpga_led_internal;
   assign stm_hw_events    = {{4{1'b0}}, SW, fpga_led_internal, fpga_debounced_buttons};
@@ -225,7 +227,7 @@ module ghrd_top(
 //  Structural coding
 //=======================================================
 soc_system u0 (      
-		  .clk_clk                               (CLOCK_50),                             //                clk.clk
+		  .clk_clk                               (fpga_clk_50),                             //                clk.clk
 		  .reset_reset_n                         (1'b1),                                 //                reset.reset_n
 		  //HPS ddr3
 		  .memory_mem_a                          ( HPS_DDR3_ADDR),                       //                memory.mem_a
@@ -322,9 +324,9 @@ soc_system u0 (
      .hps_0_f2h_stm_hw_events_stm_hwevents  (stm_hw_events ),  //        hps_0_f2h_stm_hw_events.stm_hwevents
      .hps_0_f2h_warm_reset_req_reset_n      (~hps_warm_reset ),      //       hps_0_f2h_warm_reset_req.reset_n
 
-	  .overlay_src_data(),                    //                  render_source.data
-	  .overlay_src_valid(),                   //                               .valid
-	  .overlay_src_ready(1'b1),                   //                               .ready
+	  .overlay_data(overlay_data),                    //                  render_source.data
+	  .overlay_valid(overlay_valid),                   //                               .valid
+	  .overlay_ready(overlay_ready),                   //                               .ready
     .edid_scl      (GPIO_0[32]),
     .edid_sda       (GPIO_0[33]),
 
@@ -383,10 +385,10 @@ altera_edge_detector pulse_debug_reset (
   defparam pulse_debug_reset.PULSE_EXT = 32;
   defparam pulse_debug_reset.EDGE_TYPE = 1;
   defparam pulse_debug_reset.IGNORE_RST_WHILE_BUSY = 1;
-  
+
 reg [25:0] counter; 
 reg  led_level;
-always @(posedge fpga_clk_50 or negedge hps_fpga_reset_n)
+always @(posedge odck_to_overlay or negedge hps_fpga_reset_n)
 begin
 if(~hps_fpga_reset_n)
 begin
@@ -505,6 +507,18 @@ assign VGA_BLANK_N = vga_de && !sw_blank;
 assign VGA_SYNC_N = 1'b1;
 assign VGA_CLK = ~pixel_clk_o;
 
+pixel_data_adapter dma2overlay(
+  .rst_n     (hps_fpga_reset_n),
+  .clk_src   (fpga_clk_50),
+  .data_src  (overlay_data),
+  .valid_src (overlay_valid),
+  .ready_src (overlay_ready),
+  .clk_sink  (pixel_fifo_clk),
+  .pixel_sink(pixel_fifo_data_ext),
+  .empty_sink(pixel_fifo_empty_ext),
+  .req_sink  (pixel_fifo_req),
+);
+
 wire feeder_clk, feeder_clk_locked;
 
 feeder_pll feeder_pll1(
@@ -524,6 +538,16 @@ test_img_feeder feeder1(
   .fifoRdempty(pixel_fifo_empty_int),
   
   .pause(sw_pattern_pause)
+);
+
+SEG7_LUT_6 seg_disp(
+  .oSEG0(HEX0),
+  .oSEG1(HEX1),
+  .oSEG2(HEX2),
+  .oSEG3(HEX3),
+  .oSEG4(HEX4),
+  .oSEG5(HEX5),
+  .iDIG({pxl_width[11:0], pxl_height[11:0]})
 );
 
 endmodule

@@ -92,9 +92,9 @@ module soc_system (
 		output wire        memory_mem_odt,                         //                               .mem_odt
 		output wire [3:0]  memory_mem_dm,                          //                               .mem_dm
 		input  wire        memory_oct_rzqin,                       //                               .oct_rzqin
-		output wire [63:0] overlay_src_data,                       //                    overlay_src.data
-		output wire        overlay_src_valid,                      //                               .valid
-		input  wire        overlay_src_ready,                      //                               .ready
+		output wire [63:0] overlay_data,                           //                        overlay.data
+		output wire        overlay_valid,                          //                               .valid
+		input  wire        overlay_ready,                          //                               .ready
 		input  wire        reset_reset_n                           //                          reset.reset_n
 	);
 
@@ -692,9 +692,9 @@ module soc_system (
 		.descriptor_slave_writedata   (mm_interconnect_0_overlay_dma_descriptor_slave_writedata),   //                 .writedata
 		.descriptor_slave_byteenable  (mm_interconnect_0_overlay_dma_descriptor_slave_byteenable),  //                 .byteenable
 		.csr_irq_irq                  (),                                                           //          csr_irq.irq
-		.st_source_data               (overlay_src_data),                                           //        st_source.data
-		.st_source_valid              (overlay_src_valid),                                          //                 .valid
-		.st_source_ready              (overlay_src_ready)                                           //                 .ready
+		.st_source_data               (overlay_data),                                               //        st_source.data
+		.st_source_valid              (overlay_valid),                                              //                 .valid
+		.st_source_ready              (overlay_ready)                                               //                 .ready
 	);
 
 	soc_system_render_dma render_dma (

@@ -1064,7 +1064,22 @@ set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[7] -t
 set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[8] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
 set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[9] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
 set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[13] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
-set_global_assignment -name QIP_FILE ip/edid_mem.qip
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LOANIO62
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LOANIO58
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LOANIO00
+set_global_assignment -name ENABLE_OCT_DONE OFF
+set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
+set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
+set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+set_global_assignment -name GENERATE_RBF_FILE OFF
+set_global_assignment -name CRC_ERROR_OPEN_DRAIN ON
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
+set_global_assignment -name VERILOG_FILE ip_danmaku/pixel_data_adapter.v
+set_global_assignment -name QIP_FILE ip_danmaku/adapter_fifo.qip
 set_global_assignment -name QIP_FILE ip_danmaku/feeder_pll.qip
 set_global_assignment -name VERILOG_FILE ip_danmaku/tfp401a.v
 set_global_assignment -name VERILOG_FILE ip_danmaku/test_img_feeder.v
@@ -1073,6 +1088,7 @@ set_global_assignment -name VERILOG_FILE ip_danmaku/simple.v
 set_global_assignment -name VERILOG_FILE ip_danmaku/pxlCount.v
 set_global_assignment -name QIP_FILE ip_danmaku/fifo_32to32.qip
 set_global_assignment -name VERILOG_FILE ip_danmaku/danmaku_overlay.v
+set_global_assignment -name QIP_FILE ip/edid_mem.qip
 set_global_assignment -name QIP_FILE ip/altsource_probe/hps_reset.qip
 set_global_assignment -name VERILOG_FILE ip/altsource_probe/hps_reset.v
 set_global_assignment -name VERILOG_FILE ip/debounce/debounce.v
@@ -1081,8 +1097,6 @@ set_global_assignment -name QIP_FILE soc_system/synthesis/soc_system.qip
 set_global_assignment -name SDC_FILE soc_system_timing.sdc
 set_global_assignment -name VERILOG_FILE ghrd_top.v
 set_global_assignment -name SIGNALTAP_FILE render.stp
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LOANIO62
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LOANIO58
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LOANIO00
+set_global_assignment -name VERILOG_FILE SEG7_LUT_6.v
 set_global_assignment -name SLD_FILE db/render_auto_stripped.stp
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
