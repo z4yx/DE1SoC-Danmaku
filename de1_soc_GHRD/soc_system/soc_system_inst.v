@@ -87,9 +87,9 @@
 		.memory_mem_odt                         (<connected-to-memory_mem_odt>),                         //                               .mem_odt
 		.memory_mem_dm                          (<connected-to-memory_mem_dm>),                          //                               .mem_dm
 		.memory_oct_rzqin                       (<connected-to-memory_oct_rzqin>),                       //                               .oct_rzqin
-		.reset_reset_n                          (<connected-to-reset_reset_n>),                          //                          reset.reset_n
 		.overlay_data                           (<connected-to-overlay_data>),                           //                        overlay.data
 		.overlay_valid                          (<connected-to-overlay_valid>),                          //                               .valid
-		.overlay_ready                          (<connected-to-overlay_ready>)                           //                               .ready
+		.overlay_ready                          (<connected-to-overlay_ready>),                          //                               .ready
+		.reset_reset_n                          (<connected-to-reset_reset_n>)                           //                          reset.reset_n
 	);
 

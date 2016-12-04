@@ -88,10 +88,10 @@ module soc_system (
 	memory_mem_odt,
 	memory_mem_dm,
 	memory_oct_rzqin,
-	reset_reset_n,
 	overlay_data,
 	overlay_valid,
-	overlay_ready);	
+	overlay_ready,
+	reset_reset_n);	
 
 	input	[3:0]	button_pio_external_connection_export;
 	input		clk_clk;
@@ -181,8 +181,8 @@ module soc_system (
 	output		memory_mem_odt;
 	output	[3:0]	memory_mem_dm;
 	input		memory_oct_rzqin;
-	input		reset_reset_n;
 	output	[63:0]	overlay_data;
 	output		overlay_valid;
 	input		overlay_ready;
+	input		reset_reset_n;
 endmodule

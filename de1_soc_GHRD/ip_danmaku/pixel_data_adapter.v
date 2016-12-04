@@ -13,16 +13,19 @@ module pixel_data_adapter (
     
 );
 
+wire [63:0] rev_order;
 wire wrfull;
 wire [3:0] short;
 wire [31:0] mapped_pixel;
 assign ready_src = ~wrfull;
+assign rev_order = {data_src[7:0],data_src[15:8],data_src[23:16],data_src[31:24],
+                    data_src[39:32],data_src[47:40],data_src[55:48],data_src[63:56]};
 
 adapter_fifo fifo( //fifo in showahead mode
     .wrclk(clk_src),
     .wrreq(valid_src),
     .wrfull(wrfull),
-    .data(data_src),
+    .data(rev_order),
     .rdclk(clk_sink),
     .rdreq(req_sink),
     .rdempty(empty_sink),
