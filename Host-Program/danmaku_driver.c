@@ -10,14 +10,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define QSYS_SYSTEMID 0xacd51302
-
-#define PERPH_ADDR_BASE 0xff210000
-#define PERPH_ADDR_SPAN 0x10000
+#include "constants.h"
 
 #define REG_OFF32(base, number) ((volatile uint32_t*)((uintptr_t)(base)+4*(number)))
 
-#define FRAME_BUFFER_SIZE (2000*1100*4/8+7 & ~7)
+// #define FRAME_BUFFER_SIZE (2000*1100*4/8+7 & ~7)
 
 typedef struct{
     int fd_devmem;

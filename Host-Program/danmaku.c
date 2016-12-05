@@ -15,27 +15,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-// layer info
-#define MAX_WIDTH       2000
-#define MAX_HEIGHT      256
-#define MAX_TEXT_LEN    512
-
-#define SLIDING_LAYER_ROWS 5
-#define SLIDING_LAYER_COLS 5
-#define NUM_STATIC_LAYER 5
-
-// screen info
-#define MAX_SCREEN_HEIGHT 1200
-
-// special colors
-#define PXL_HSYNC (0xe)
-#define PXL_VSYNC (0xf)
-#define PXL_BLANK (0xd)
-
-// parameters
-#define FONT_FILE_PATH "SourceHanSansCN-Bold.otf"
-#define CYCLE_PER_DANMU    45
-#define DURATION           25
+#include "constants.h"
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
@@ -55,9 +35,6 @@ unsigned int img_size;
 int error; // last error code
 volatile int render_running;
 
-#define MAX_IMG_SIZE ((((MAX_WIDTH + 2) * MAX_SCREEN_HEIGHT) / 2 + 3) & (~3))
-uint8_t buf[MAX_IMG_SIZE]; // shared buffer for two PCIEs
-
 char PrintPixel(uint8_t n)
 {
     switch (n) {
@@ -75,7 +52,7 @@ char PrintPixel(uint8_t n)
     }
 }
 
-void PrintBuf()
+void PrintBuf(uint8_t* buf)
 {
     for (int i = 0; i < img_size; i++) {
         fprintf(stderr, "%c%c", PrintPixel(buf[i] & 0xF), PrintPixel(buf[i] >> 4));
@@ -479,7 +456,7 @@ void Push(queen_t *queen, wchar_t *src)
 
 queen_t sliding_queen, static_queen;
 
-void RenderOnce()
+void RenderOnce(uint8_t* buf)
 {
     ClearScreen(buf);
 
@@ -556,10 +533,8 @@ void Render()
     pthread_mutex_lock(&render_overlay_mutex);
     render_running = 1;
     for (int i = 0; i < 100; i++) {
-        RenderOnce();
         void* fb = (void*)DanmakuHW_GetFrameBuffer(hDriver, cs);
-        // printf("copy to fb %p, len=%u\n", fb, img_size);
-        memcpy(fb, buf, img_size);
+        RenderOnce((uint8_t*)fb);
         // {
         //     uint64_t* ptr64 = (uint64_t*)fb;
         //     for (int i = 0; i < 128; ++i)
