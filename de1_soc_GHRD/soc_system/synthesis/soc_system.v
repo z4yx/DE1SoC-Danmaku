@@ -302,13 +302,13 @@ module soc_system (
 	wire          render_dma_mm_read_read;                                    // render_dma:mm_read_read -> mm_interconnect_3:render_dma_mm_read_read
 	wire   [15:0] render_dma_mm_read_byteenable;                              // render_dma:mm_read_byteenable -> mm_interconnect_3:render_dma_mm_read_byteenable
 	wire          render_dma_mm_read_readdatavalid;                           // mm_interconnect_3:render_dma_mm_read_readdatavalid -> render_dma:mm_read_readdatavalid
-	wire    [7:0] render_dma_mm_read_burstcount;                              // render_dma:mm_read_burstcount -> mm_interconnect_3:render_dma_mm_read_burstcount
+	wire    [6:0] render_dma_mm_read_burstcount;                              // render_dma:mm_read_burstcount -> mm_interconnect_3:render_dma_mm_read_burstcount
 	wire          render_dma_mm_write_waitrequest;                            // mm_interconnect_3:render_dma_mm_write_waitrequest -> render_dma:mm_write_waitrequest
 	wire   [31:0] render_dma_mm_write_address;                                // render_dma:mm_write_address -> mm_interconnect_3:render_dma_mm_write_address
 	wire   [15:0] render_dma_mm_write_byteenable;                             // render_dma:mm_write_byteenable -> mm_interconnect_3:render_dma_mm_write_byteenable
 	wire          render_dma_mm_write_write;                                  // render_dma:mm_write_write -> mm_interconnect_3:render_dma_mm_write_write
 	wire  [127:0] render_dma_mm_write_writedata;                              // render_dma:mm_write_writedata -> mm_interconnect_3:render_dma_mm_write_writedata
-	wire    [7:0] render_dma_mm_write_burstcount;                             // render_dma:mm_write_burstcount -> mm_interconnect_3:render_dma_mm_write_burstcount
+	wire    [6:0] render_dma_mm_write_burstcount;                             // render_dma:mm_write_burstcount -> mm_interconnect_3:render_dma_mm_write_burstcount
 	wire  [127:0] mm_interconnect_3_hps_0_f2h_sdram1_data_readdata;           // hps_0:f2h_sdram1_READDATA -> mm_interconnect_3:hps_0_f2h_sdram1_data_readdata
 	wire          mm_interconnect_3_hps_0_f2h_sdram1_data_waitrequest;        // hps_0:f2h_sdram1_WAITREQUEST -> mm_interconnect_3:hps_0_f2h_sdram1_data_waitrequest
 	wire   [27:0] mm_interconnect_3_hps_0_f2h_sdram1_data_address;            // mm_interconnect_3:hps_0_f2h_sdram1_data_address -> hps_0:f2h_sdram1_ADDRESS

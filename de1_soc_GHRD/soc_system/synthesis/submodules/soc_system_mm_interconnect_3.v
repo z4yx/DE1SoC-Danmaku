@@ -12,14 +12,14 @@ module soc_system_mm_interconnect_3 (
 		input  wire         render_dma_reset_n_reset_bridge_in_reset_reset,                     //                     render_dma_reset_n_reset_bridge_in_reset.reset
 		input  wire [31:0]  render_dma_mm_read_address,                                         //                                           render_dma_mm_read.address
 		output wire         render_dma_mm_read_waitrequest,                                     //                                                             .waitrequest
-		input  wire [7:0]   render_dma_mm_read_burstcount,                                      //                                                             .burstcount
+		input  wire [6:0]   render_dma_mm_read_burstcount,                                      //                                                             .burstcount
 		input  wire [15:0]  render_dma_mm_read_byteenable,                                      //                                                             .byteenable
 		input  wire         render_dma_mm_read_read,                                            //                                                             .read
 		output wire [127:0] render_dma_mm_read_readdata,                                        //                                                             .readdata
 		output wire         render_dma_mm_read_readdatavalid,                                   //                                                             .readdatavalid
 		input  wire [31:0]  render_dma_mm_write_address,                                        //                                          render_dma_mm_write.address
 		output wire         render_dma_mm_write_waitrequest,                                    //                                                             .waitrequest
-		input  wire [7:0]   render_dma_mm_write_burstcount,                                     //                                                             .burstcount
+		input  wire [6:0]   render_dma_mm_write_burstcount,                                     //                                                             .burstcount
 		input  wire [15:0]  render_dma_mm_write_byteenable,                                     //                                                             .byteenable
 		input  wire         render_dma_mm_write_write,                                          //                                                             .write
 		input  wire [127:0] render_dma_mm_write_writedata,                                      //                                                             .writedata
@@ -44,7 +44,7 @@ module soc_system_mm_interconnect_3 (
 	wire          render_dma_mm_read_translator_avalon_universal_master_0_lock;           // render_dma_mm_read_translator:uav_lock -> render_dma_mm_read_agent:av_lock
 	wire          render_dma_mm_read_translator_avalon_universal_master_0_write;          // render_dma_mm_read_translator:uav_write -> render_dma_mm_read_agent:av_write
 	wire  [127:0] render_dma_mm_read_translator_avalon_universal_master_0_writedata;      // render_dma_mm_read_translator:uav_writedata -> render_dma_mm_read_agent:av_writedata
-	wire   [11:0] render_dma_mm_read_translator_avalon_universal_master_0_burstcount;     // render_dma_mm_read_translator:uav_burstcount -> render_dma_mm_read_agent:av_burstcount
+	wire   [10:0] render_dma_mm_read_translator_avalon_universal_master_0_burstcount;     // render_dma_mm_read_translator:uav_burstcount -> render_dma_mm_read_agent:av_burstcount
 	wire          rsp_mux_src_valid;                                                      // rsp_mux:src_valid -> render_dma_mm_read_agent:rp_valid
 	wire  [218:0] rsp_mux_src_data;                                                       // rsp_mux:src_data -> render_dma_mm_read_agent:rp_data
 	wire          rsp_mux_src_ready;                                                      // render_dma_mm_read_agent:rp_ready -> rsp_mux:src_ready
@@ -61,7 +61,7 @@ module soc_system_mm_interconnect_3 (
 	wire          render_dma_mm_write_translator_avalon_universal_master_0_lock;          // render_dma_mm_write_translator:uav_lock -> render_dma_mm_write_agent:av_lock
 	wire          render_dma_mm_write_translator_avalon_universal_master_0_write;         // render_dma_mm_write_translator:uav_write -> render_dma_mm_write_agent:av_write
 	wire  [127:0] render_dma_mm_write_translator_avalon_universal_master_0_writedata;     // render_dma_mm_write_translator:uav_writedata -> render_dma_mm_write_agent:av_writedata
-	wire   [11:0] render_dma_mm_write_translator_avalon_universal_master_0_burstcount;    // render_dma_mm_write_translator:uav_burstcount -> render_dma_mm_write_agent:av_burstcount
+	wire   [10:0] render_dma_mm_write_translator_avalon_universal_master_0_burstcount;    // render_dma_mm_write_translator:uav_burstcount -> render_dma_mm_write_agent:av_burstcount
 	wire          rsp_mux_001_src_valid;                                                  // rsp_mux_001:src_valid -> render_dma_mm_write_agent:rp_valid
 	wire  [218:0] rsp_mux_001_src_data;                                                   // rsp_mux_001:src_data -> render_dma_mm_write_agent:rp_data
 	wire          rsp_mux_001_src_ready;                                                  // render_dma_mm_write_agent:rp_ready -> rsp_mux_001:src_ready
@@ -163,10 +163,10 @@ module soc_system_mm_interconnect_3 (
 	altera_merlin_master_translator #(
 		.AV_ADDRESS_W                (32),
 		.AV_DATA_W                   (128),
-		.AV_BURSTCOUNT_W             (8),
+		.AV_BURSTCOUNT_W             (7),
 		.AV_BYTEENABLE_W             (16),
 		.UAV_ADDRESS_W               (32),
-		.UAV_BURSTCOUNT_W            (12),
+		.UAV_BURSTCOUNT_W            (11),
 		.USE_READ                    (1),
 		.USE_WRITE                   (0),
 		.USE_BEGINBURSTTRANSFER      (0),
@@ -223,10 +223,10 @@ module soc_system_mm_interconnect_3 (
 	altera_merlin_master_translator #(
 		.AV_ADDRESS_W                (32),
 		.AV_DATA_W                   (128),
-		.AV_BURSTCOUNT_W             (8),
+		.AV_BURSTCOUNT_W             (7),
 		.AV_BYTEENABLE_W             (16),
 		.UAV_ADDRESS_W               (32),
-		.UAV_BURSTCOUNT_W            (12),
+		.UAV_BURSTCOUNT_W            (11),
 		.USE_READ                    (0),
 		.USE_WRITE                   (1),
 		.USE_BEGINBURSTTRANSFER      (0),
@@ -388,7 +388,7 @@ module soc_system_mm_interconnect_3 (
 		.PKT_DEST_ID_L             (205),
 		.ST_DATA_W                 (219),
 		.ST_CHANNEL_W              (2),
-		.AV_BURSTCOUNT_W           (12),
+		.AV_BURSTCOUNT_W           (11),
 		.SUPPRESS_0_BYTEEN_RSP     (0),
 		.ID                        (0),
 		.BURSTWRAP_VALUE           (1),
@@ -469,7 +469,7 @@ module soc_system_mm_interconnect_3 (
 		.PKT_DEST_ID_L             (205),
 		.ST_DATA_W                 (219),
 		.ST_CHANNEL_W              (2),
-		.AV_BURSTCOUNT_W           (12),
+		.AV_BURSTCOUNT_W           (11),
 		.SUPPRESS_0_BYTEEN_RSP     (0),
 		.ID                        (1),
 		.BURSTWRAP_VALUE           (1),
