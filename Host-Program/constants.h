@@ -11,7 +11,7 @@
 #define NUM_STATIC_LAYER 5
 
 // screen info
-#define MAX_SCREEN_HEIGHT 1200
+#define MAX_SCREEN_HEIGHT 1100
 
 // special colors
 #define PXL_HSYNC (0xe)
@@ -20,10 +20,10 @@
 
 // parameters
 #define FONT_FILE_PATH "SourceHanSansCN-Bold.otf"
-#define CYCLE_PER_DANMU    256
-#define DURATION           25
+#define CYCLE_PER_DANMU    512
+#define DURATION           100
 
-#define MAX_IMG_SIZE ((((MAX_WIDTH + 2) * MAX_SCREEN_HEIGHT) / 2 + 3) & (~3))
+#define MAX_IMG_SIZE ((((MAX_WIDTH + 2) * MAX_SCREEN_HEIGHT) + 3) & (~3))
 #define FRAME_BUFFER_SIZE MAX_IMG_SIZE
 
 #define QSYS_SYSTEMID 0xacd51302

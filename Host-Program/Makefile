@@ -1,5 +1,5 @@
 TARGET = danmaku
-CFLAGS += -std=c11 `pkg-config freetype2 --cflags` -g3
+CFLAGS += $(CFLAGS_EXTRA) -std=c11 `pkg-config freetype2 --cflags` -g3
 
 LDFLAGS += -pthread
 

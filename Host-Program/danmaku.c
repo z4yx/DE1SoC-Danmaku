@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -35,6 +36,13 @@ unsigned int img_size;
 int error; // last error code
 volatile int render_running;
 
+uint8_t *blank_screen;
+uint32_t blank_screen_phy;
+
+void intHandler(int dummy) {
+    render_running = 0;
+}
+
 char PrintPixel(uint8_t n)
 {
     switch (n) {
@@ -55,7 +63,7 @@ char PrintPixel(uint8_t n)
 void PrintBuf(uint8_t* buf)
 {
     for (int i = 0; i < img_size; i++) {
-        fprintf(stderr, "%c%c", PrintPixel(buf[i] & 0xF), PrintPixel(buf[i] >> 4));
+        fprintf(stderr, "%c", PrintPixel(buf[i]));
     }
 }
 
@@ -67,18 +75,6 @@ void FillBlank(uint8_t map[][MAX_WIDTH * 2], int head, int len)
         for (int j = head; j < head + len; j++) {
             map[i][j] = PXL_BLANK;
         }
-    }
-}
-
-// ==========================
-// Write color in 4 bits
-void ImgWriteColor(uint8_t *img, size_t offset, uint8_t color)
-{
-    uint8_t *pos = img + offset / 2;
-    if (offset % 2 == 0) { // low 4 digits
-        *pos = (*pos & 0xf0) | (color & 0x0f);
-    } else { // high 4 digits
-        *pos = (*pos & 0x0f) | (color << 4);
     }
 }
 
@@ -195,7 +191,8 @@ typedef struct {
     int ppc; // pixels sliding per cycle
     bool enable;
 
-    uint8_t map[MAX_HEIGHT][MAX_WIDTH * 2]; // pixel map (color for each pixel)
+    uint8_t (*map)[MAX_WIDTH * 2]; // pixel map (color for each pixel)
+    uint8_t (*map_phy)[MAX_WIDTH * 2]; //physical address of pixel map
 } sliding_layer_t;
 
 
@@ -203,6 +200,7 @@ void InitSliding(sliding_layer_t *s, int y)
 {
     s->enable = false;
     s->y = y;
+    DanmakuHW_AllocRenderBuf(hDriver, (uintptr_t*)&s->map, (uintptr_t*)&s->map_phy, MAX_HEIGHT*(MAX_WIDTH*2));
 }
 
 void SlidingNextCycle(sliding_layer_t *s)
@@ -235,41 +233,49 @@ void SlidingWritePixels(uint8_t *dst, sliding_layer_t *s)
         return;
     }
 
+    int y = edge * s->y;
+    uint32_t line_base = y * (screen_width + 2);
+    int xfrom = s->x;
+    int xto = s->x + s->width - 1;
+    if(xfrom >= screen_width || xto < 0)
+        return;
+    if(xfrom < 0) xfrom = 0;
+    if(xto >= screen_width) xto = screen_width-1;
     for (int i = 0; i < edge; i++) {
-        for (int j = 0; j < s->width; j++) {
-            int x = s->x + j;
-            int y = edge * s->y + i;
-            if (x > 0 && x < screen_width) {
-                if (s->map[i][j] < 8) {
-                    ImgWriteColor(dst, y * (screen_width + 2) + x, s->map[i][j]);
-                }
-            }
-        }
+        uint32_t addr_xfrom = (line_base + xfrom);
+        uint32_t addr_xto = (line_base + xto);
+        DanmakuHW_RenderStartDMA(hDriver, &dst[addr_xfrom], &s->map_phy[i][0], addr_xto - addr_xfrom + 1);
+        line_base += (screen_width + 2);
     }
 }
 
-// clear screen
-void ClearScreen(uint8_t *dst)
+void InitBlankScreen(void)
 {
-    int offset = 0;
+    uint32_t offset = 0;
+    DanmakuHW_AllocRenderBuf(hDriver, (uintptr_t*)&blank_screen, &blank_screen_phy, img_size);
     for (int i = 0; i < screen_height; i++) {
         for (int j = 0; j < screen_width; j++) {
-            ImgWriteColor(dst, offset++, PXL_BLANK);
+            blank_screen[offset++] = 0x10 | PXL_BLANK;
         }
         if (i < screen_height - 1) {
-            ImgWriteColor(dst, offset++, PXL_HSYNC);
-            ImgWriteColor(dst, offset++, PXL_HSYNC);
+            blank_screen[offset++] = PXL_HSYNC;
+            blank_screen[offset++] = PXL_HSYNC;
         }
     }
-
     // fill blank until reach img_size
-    while (offset < img_size * 2) {
-        ImgWriteColor(dst, offset++, PXL_BLANK);
+    while (offset < img_size) {
+        blank_screen[offset++] = 0x10 | PXL_BLANK;
     }
 
     // fill last two with VSYNC
-    ImgWriteColor(dst, img_size * 2 - 1, PXL_VSYNC);
-    ImgWriteColor(dst, img_size * 2 - 2, PXL_VSYNC);
+    blank_screen[img_size - 1] = PXL_VSYNC;
+    blank_screen[img_size - 2] = PXL_VSYNC;
+
+}
+// clear screen
+void ClearScreen(uint8_t *dst)
+{
+    DanmakuHW_RenderStartDMA(hDriver, dst, blank_screen_phy, img_size);
 }
 
 
@@ -281,7 +287,8 @@ typedef struct {
     int valid_len; // actual length (in pixels) after setting text
     int y;
 
-    uint8_t map[MAX_HEIGHT][MAX_WIDTH * 2]; // pixel map (color for each pixel)
+    uint8_t (*map)[MAX_WIDTH * 2]; // pixel map (color for each pixel)
+    uint8_t (*map_phy)[MAX_WIDTH * 2]; //physical address of pixel map
 } static_layer_t;
 
 void InitStatic(static_layer_t *s, int y)
@@ -289,6 +296,7 @@ void InitStatic(static_layer_t *s, int y)
     s->y = y;
     s->enable = false;
     s->counter = 0;
+    DanmakuHW_AllocRenderBuf(hDriver, (uintptr_t*)&s->map, (uintptr_t*)&s->map_phy, MAX_HEIGHT*(MAX_WIDTH*2));
     FillBlank(s->map, 0, MAX_WIDTH * 2);
 }
 
@@ -331,22 +339,24 @@ void StaticWritePixels(uint8_t *dst, static_layer_t *s)
         return;
     }
 
+    int y = edge * s->y;
+    uint32_t line_base = y * (screen_width + 2);
+    int xfrom;
+    if (screen_width > s->valid_len) {
+        xfrom = (screen_width - s->valid_len) / 2;
+    } else {
+        xfrom = 0;
+    }
+    int xto = xfrom + s->valid_len - 1;
+    if(xfrom >= screen_width || xto < 0)
+        return;
+    if(xfrom < 0) xfrom = 0;
+    if(xto >= screen_width) xto = screen_width-1;
     for (int i = 0; i < edge; i++) {
-        for (int j = 0; j < s->valid_len; j++) {
-            int x;
-            if (screen_width > s->valid_len) {
-                x = (screen_width - s->valid_len) / 2 + j;
-            } else {
-                x = j;
-            }
-            int y = edge * s->y + i;
-            if (x >= 0 && x < screen_width) {
-                if (s->map[i][j] < 8) {
-                    // printf("write color: %d\n", s->map[i][j]);
-                    ImgWriteColor(dst, y * (screen_width + 2) + x, s->map[i][j]);
-                }
-            }
-        }
+        uint32_t addr_xfrom = (line_base + xfrom);
+        uint32_t addr_xto = (line_base + xto);
+        DanmakuHW_RenderStartDMA(hDriver, &dst[addr_xfrom], &s->map_phy[i][0], addr_xto - addr_xfrom + 1);
+        line_base += (screen_width + 2);
     }
 }
 
@@ -532,9 +542,14 @@ void Render()
 
     pthread_mutex_lock(&render_overlay_mutex);
     render_running = 1;
-    for (int i = 0; i < 100; i++) {
+    while (render_running) {
+#ifdef SIM_MODE
+        uint8_t fb[MAX_IMG_SIZE];
+#else
         void* fb = (void*)DanmakuHW_GetFrameBuffer(hDriver, cs);
+#endif
         RenderOnce((uint8_t*)fb);
+        while(!DanmakuHW_RenderDMAIdle(hDriver));
         // {
         //     uint64_t* ptr64 = (uint64_t*)fb;
         //     for (int i = 0; i < 128; ++i)
@@ -546,6 +561,7 @@ void Render()
         printf("render done\n");
         pthread_cond_wait(&render_overlay_cv, &render_overlay_mutex);
         cs = !cs;
+        // while(1)pthread_yield(); /////////
     }
     render_running = 0;
     pthread_mutex_unlock(&render_overlay_mutex);
@@ -566,12 +582,15 @@ void *Thread4Overlay(void *t)
         if(pthread_mutex_trylock(&render_overlay_mutex) == 0){
             //render done, switching buffer
 
-            cs = !cs;
+            // while(DanmakuHW_OverlayBusy(hDriver));
 
+            cs = !cs;
+/*
             DanmakuHW_FrameBufferTxmit(hDriver, cs, img_size);
 
-            while(DanmakuHW_PendingTxmit(hDriver)); //ensure old buffer not being used
-
+            //ensure old buffer not being used
+            while(DanmakuHW_PendingTxmit(hDriver));
+*/
             pthread_cond_signal(&render_overlay_cv);
             pthread_mutex_unlock(&render_overlay_mutex);
         }
@@ -593,18 +612,22 @@ void SubMain()
         return;
     }
 
-    img_size = (((screen_width + 2) * screen_height) / 2 + 3) & (~3);
+    img_size = (((screen_width + 2) * screen_height) + 3) & (~3);
     // PCIE_Write32(hDriver, PCIE_USER_BAR, REG_IMGSIZE, (uint32_t)img_size);
 
     edge = screen_width / 20;
+    InitBlankScreen();
     InitFontMap();
     printf("character: %d * %d\n", edge, edge);
 
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+#ifndef SIM_MODE
     pthread_create(&overlay_thread, &attr, Thread4Overlay, NULL);
+#endif
 
     // printf("begin rendering\n");
+    signal(SIGINT, intHandler);
     Render();
 
     pthread_attr_destroy(&attr);
@@ -617,6 +640,7 @@ int main()
     pthread_mutex_init(&render_overlay_mutex, NULL);
     pthread_cond_init (&render_overlay_cv, NULL);
 
+#ifndef SIM_MODE
     hDriver = DanmakuHW_Open();
     if (!hDriver) {
         fprintf(stderr, "DanmakuHW_Open failed\n");
@@ -633,6 +657,7 @@ int main()
         DanmakuHW_LoadEDID(hDriver, edid, len);
         fclose(ef);
     }
+#endif
 
     InitQueen(&sliding_queen);
     InitQueen(&static_queen);
