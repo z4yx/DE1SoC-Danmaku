@@ -71,6 +71,7 @@
 			hps_0_hps_io_hps_io_gpio_inst_LOANIO00 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO00
 			hps_0_hps_io_hps_io_gpio_inst_LOANIO58 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO58
 			hps_0_hps_io_hps_io_gpio_inst_LOANIO62 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO62
+			info_resolution                        : in    std_logic_vector(31 downto 0) := (others => 'X'); -- resolution
 			led_pio_external_connection_export     : out   std_logic_vector(9 downto 0);                     -- export
 			memory_mem_a                           : out   std_logic_vector(14 downto 0);                    -- mem_a
 			memory_mem_ba                          : out   std_logic_vector(2 downto 0);                     -- mem_ba
@@ -168,6 +169,7 @@
 			hps_0_hps_io_hps_io_gpio_inst_LOANIO00 => CONNECTED_TO_hps_0_hps_io_hps_io_gpio_inst_LOANIO00, --                               .hps_io_gpio_inst_LOANIO00
 			hps_0_hps_io_hps_io_gpio_inst_LOANIO58 => CONNECTED_TO_hps_0_hps_io_hps_io_gpio_inst_LOANIO58, --                               .hps_io_gpio_inst_LOANIO58
 			hps_0_hps_io_hps_io_gpio_inst_LOANIO62 => CONNECTED_TO_hps_0_hps_io_hps_io_gpio_inst_LOANIO62, --                               .hps_io_gpio_inst_LOANIO62
+			info_resolution                        => CONNECTED_TO_info_resolution,                        --                           info.resolution
 			led_pio_external_connection_export     => CONNECTED_TO_led_pio_external_connection_export,     --    led_pio_external_connection.export
 			memory_mem_a                           => CONNECTED_TO_memory_mem_a,                           --                         memory.mem_a
 			memory_mem_ba                          => CONNECTED_TO_memory_mem_ba,                          --                               .mem_ba

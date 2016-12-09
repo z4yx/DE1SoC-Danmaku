@@ -9,17 +9,17 @@
 module soc_system_render_dma (
 		output wire [31:0]  mm_read_address,              //          mm_read.address
 		output wire         mm_read_read,                 //                 .read
-		output wire [15:0]  mm_read_byteenable,           //                 .byteenable
-		input  wire [127:0] mm_read_readdata,             //                 .readdata
+		output wire [7:0]   mm_read_byteenable,           //                 .byteenable
+		input  wire [63:0]  mm_read_readdata,             //                 .readdata
 		input  wire         mm_read_waitrequest,          //                 .waitrequest
 		input  wire         mm_read_readdatavalid,        //                 .readdatavalid
-		output wire [6:0]   mm_read_burstcount,           //                 .burstcount
+		output wire [5:0]   mm_read_burstcount,           //                 .burstcount
 		output wire [31:0]  mm_write_address,             //         mm_write.address
 		output wire         mm_write_write,               //                 .write
-		output wire [15:0]  mm_write_byteenable,          //                 .byteenable
-		output wire [127:0] mm_write_writedata,           //                 .writedata
+		output wire [7:0]   mm_write_byteenable,          //                 .byteenable
+		output wire [63:0]  mm_write_writedata,           //                 .writedata
 		input  wire         mm_write_waitrequest,         //                 .waitrequest
-		output wire [6:0]   mm_write_burstcount,          //                 .burstcount
+		output wire [5:0]   mm_write_burstcount,          //                 .burstcount
 		input  wire         clock_clk,                    //            clock.clk
 		input  wire         reset_n_reset_n,              //          reset_n.reset_n
 		input  wire [31:0]  csr_writedata,                //              csr.writedata
@@ -36,7 +36,7 @@ module soc_system_render_dma (
 	);
 
 	wire          read_mstr_internal_data_source_valid;           // read_mstr_internal:src_valid -> write_mstr_internal:snk_valid
-	wire  [127:0] read_mstr_internal_data_source_data;            // read_mstr_internal:src_data -> write_mstr_internal:snk_data
+	wire   [63:0] read_mstr_internal_data_source_data;            // read_mstr_internal:src_data -> write_mstr_internal:snk_data
 	wire          read_mstr_internal_data_source_ready;           // write_mstr_internal:snk_ready -> read_mstr_internal:src_ready
 	wire          dispatcher_internal_read_command_source_valid;  // dispatcher_internal:src_read_master_valid -> read_mstr_internal:snk_command_valid
 	wire  [255:0] dispatcher_internal_read_command_source_data;   // dispatcher_internal:src_read_master_data -> read_mstr_internal:snk_command_data
@@ -55,7 +55,7 @@ module soc_system_render_dma (
 		.MODE                        (0),
 		.RESPONSE_PORT               (2),
 		.DESCRIPTOR_INTERFACE        (0),
-		.DESCRIPTOR_FIFO_DEPTH       (512),
+		.DESCRIPTOR_FIFO_DEPTH       (1024),
 		.ENHANCED_FEATURES           (0),
 		.DESCRIPTOR_WIDTH            (128),
 		.DESCRIPTOR_BYTEENABLE_WIDTH (16)
@@ -99,7 +99,7 @@ module soc_system_render_dma (
 	);
 
 	read_master #(
-		.DATA_WIDTH                (128),
+		.DATA_WIDTH                (64),
 		.LENGTH_WIDTH              (24),
 		.FIFO_DEPTH                (256),
 		.STRIDE_ENABLE             (0),
@@ -109,19 +109,19 @@ module soc_system_render_dma (
 		.ERROR_WIDTH               (8),
 		.CHANNEL_ENABLE            (0),
 		.CHANNEL_WIDTH             (8),
-		.BYTE_ENABLE_WIDTH         (16),
-		.BYTE_ENABLE_WIDTH_LOG2    (4),
+		.BYTE_ENABLE_WIDTH         (8),
+		.BYTE_ENABLE_WIDTH_LOG2    (3),
 		.ADDRESS_WIDTH             (32),
 		.FIFO_DEPTH_LOG2           (8),
 		.SYMBOL_WIDTH              (8),
-		.NUMBER_OF_SYMBOLS         (16),
-		.NUMBER_OF_SYMBOLS_LOG2    (4),
-		.MAX_BURST_COUNT_WIDTH     (7),
+		.NUMBER_OF_SYMBOLS         (8),
+		.NUMBER_OF_SYMBOLS_LOG2    (3),
+		.MAX_BURST_COUNT_WIDTH     (6),
 		.UNALIGNED_ACCESSES_ENABLE (1),
 		.ONLY_FULL_ACCESS_ENABLE   (0),
 		.BURST_WRAPPING_SUPPORT    (0),
 		.PROGRAMMABLE_BURST_ENABLE (0),
-		.MAX_BURST_COUNT           (64),
+		.MAX_BURST_COUNT           (32),
 		.FIFO_SPEED_OPTIMIZATION   (1),
 		.STRIDE_WIDTH              (1)
 	) read_mstr_internal (
@@ -151,7 +151,7 @@ module soc_system_render_dma (
 	);
 
 	write_master #(
-		.DATA_WIDTH                     (128),
+		.DATA_WIDTH                     (64),
 		.LENGTH_WIDTH                   (24),
 		.FIFO_DEPTH                     (256),
 		.STRIDE_ENABLE                  (0),
@@ -159,19 +159,19 @@ module soc_system_render_dma (
 		.PACKET_ENABLE                  (0),
 		.ERROR_ENABLE                   (0),
 		.ERROR_WIDTH                    (8),
-		.BYTE_ENABLE_WIDTH              (16),
-		.BYTE_ENABLE_WIDTH_LOG2         (4),
+		.BYTE_ENABLE_WIDTH              (8),
+		.BYTE_ENABLE_WIDTH_LOG2         (3),
 		.ADDRESS_WIDTH                  (32),
 		.FIFO_DEPTH_LOG2                (8),
 		.SYMBOL_WIDTH                   (8),
-		.NUMBER_OF_SYMBOLS              (16),
-		.NUMBER_OF_SYMBOLS_LOG2         (4),
-		.MAX_BURST_COUNT_WIDTH          (7),
+		.NUMBER_OF_SYMBOLS              (8),
+		.NUMBER_OF_SYMBOLS_LOG2         (3),
+		.MAX_BURST_COUNT_WIDTH          (6),
 		.UNALIGNED_ACCESSES_ENABLE      (1),
 		.ONLY_FULL_ACCESS_ENABLE        (0),
 		.BURST_WRAPPING_SUPPORT         (0),
 		.PROGRAMMABLE_BURST_ENABLE      (0),
-		.MAX_BURST_COUNT                (64),
+		.MAX_BURST_COUNT                (32),
 		.FIFO_SPEED_OPTIMIZATION        (1),
 		.STRIDE_WIDTH                   (1),
 		.ACTUAL_BYTES_TRANSFERRED_WIDTH (32)
@@ -195,7 +195,7 @@ module soc_system_render_dma (
 		.src_response_ready (write_mstr_internal_response_source_ready),      //                  .ready
 		.snk_sop            (1'b0),                                           //       (terminated)
 		.snk_eop            (1'b0),                                           //       (terminated)
-		.snk_empty          (4'b0000),                                        //       (terminated)
+		.snk_empty          (3'b000),                                         //       (terminated)
 		.snk_error          (8'b00000000)                                     //       (terminated)
 	);
 

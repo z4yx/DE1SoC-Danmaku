@@ -70,6 +70,7 @@
 		.hps_0_hps_io_hps_io_gpio_inst_LOANIO00 (<connected-to-hps_0_hps_io_hps_io_gpio_inst_LOANIO00>), //                               .hps_io_gpio_inst_LOANIO00
 		.hps_0_hps_io_hps_io_gpio_inst_LOANIO58 (<connected-to-hps_0_hps_io_hps_io_gpio_inst_LOANIO58>), //                               .hps_io_gpio_inst_LOANIO58
 		.hps_0_hps_io_hps_io_gpio_inst_LOANIO62 (<connected-to-hps_0_hps_io_hps_io_gpio_inst_LOANIO62>), //                               .hps_io_gpio_inst_LOANIO62
+		.info_resolution                        (<connected-to-info_resolution>),                        //                           info.resolution
 		.led_pio_external_connection_export     (<connected-to-led_pio_external_connection_export>),     //    led_pio_external_connection.export
 		.memory_mem_a                           (<connected-to-memory_mem_a>),                           //                         memory.mem_a
 		.memory_mem_ba                          (<connected-to-memory_mem_ba>),                          //                               .mem_ba
