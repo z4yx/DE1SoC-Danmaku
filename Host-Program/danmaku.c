@@ -538,9 +538,12 @@ void RenderOnce(uint8_t* buf)
 
 void Render()
 {
-    int cs = 0;
+    int cs = 1;
+    int dbg = 0;
 
     pthread_mutex_lock(&render_overlay_mutex);
+    ClearScreen((void*)DanmakuHW_GetFrameBuffer(hDriver, 0));
+    ClearScreen((void*)DanmakuHW_GetFrameBuffer(hDriver, 1));
     render_running = 1;
     while (render_running) {
 #ifdef SIM_MODE
@@ -550,17 +553,10 @@ void Render()
 #endif
         RenderOnce((uint8_t*)fb);
         while(!DanmakuHW_RenderDMAIdle(hDriver));
-        // {
-        //     uint64_t* ptr64 = (uint64_t*)fb;
-        //     for (int i = 0; i < 128; ++i)
-        //     {
-        //         printf("%llx ", ptr64[i]);
-        //     }
-        //     printf("\n");
-        // }
-        printf("render done\n");
+        printf("render %d done\n", cs);
         pthread_cond_wait(&render_overlay_cv, &render_overlay_mutex);
-        cs = !cs;
+        // if(++dbg<200)
+            cs = !cs;
         // while(1)pthread_yield(); /////////
     }
     render_running = 0;
@@ -570,21 +566,23 @@ void Render()
 void *Thread4Overlay(void *t) 
 {
     int cs = 1;
+    int dbg = 0;
 
     while(!render_running);
     printf("Thread4Overlay started\n");
 
     for(;render_running;){
         DanmakuHW_FrameBufferTxmit(hDriver, cs, img_size);
+        printf("transmitting %d\n", cs);
 
         while(DanmakuHW_PendingTxmit(hDriver));
 
         if(pthread_mutex_trylock(&render_overlay_mutex) == 0){
             //render done, switching buffer
 
-            // while(DanmakuHW_OverlayBusy(hDriver));
-
-            cs = !cs;
+            while(DanmakuHW_OverlayBusy(hDriver));
+            // if(++dbg<200)
+                cs = !cs;
 /*
             DanmakuHW_FrameBufferTxmit(hDriver, cs, img_size);
 

@@ -233,8 +233,8 @@ int DanmakuHW_FrameBufferTxmit(DANMAKU_HW_HANDLE h, int buf_index, uint32_t leng
     assert(length <= FRAME_BUFFER_SIZE);
     assert((length & 0x7) == 0);
 
-    printf("%s: %p %u\n",
-        __func__, ctx->paddr_fb+buf_index*FRAME_BUFFER_SIZE, length);
+    // printf("%s: %p %u\n",
+    //     __func__, DanmakuHW_GetFrameBuffer(h, buf_index), length);
 
     if(*REG_OFF32(dma_csr, 0) & 4){
         printf("Descriptor full\n");
@@ -242,7 +242,7 @@ int DanmakuHW_FrameBufferTxmit(DANMAKU_HW_HANDLE h, int buf_index, uint32_t leng
     }
 
     *REG_OFF32(dma_csr, 1) = 0; //Control
-    *REG_OFF32(dma_desc, 0) = ctx->paddr_fb+buf_index*FRAME_BUFFER_SIZE; //Read Address
+    *REG_OFF32(dma_desc, 0) = DanmakuHW_GetFrameBuffer(h, buf_index); //Read Address
     *REG_OFF32(dma_desc, 2) = length; //Length
     *REG_OFF32(dma_desc, 3) = 0x80000000; //Control
     return 0;
