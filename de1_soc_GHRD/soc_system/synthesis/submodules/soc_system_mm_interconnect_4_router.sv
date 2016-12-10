@@ -50,9 +50,9 @@ module soc_system_mm_interconnect_4_router_default_decode
                DEFAULT_DESTID = 0 
    )
   (output [132 - 132 : 0] default_destination_id,
-   output [2-1 : 0] default_wr_channel,
-   output [2-1 : 0] default_rd_channel,
-   output [2-1 : 0] default_src_channel
+   output [1-1 : 0] default_wr_channel,
+   output [1-1 : 0] default_rd_channel,
+   output [1-1 : 0] default_src_channel
   );
 
   assign default_destination_id = 
@@ -63,7 +63,7 @@ module soc_system_mm_interconnect_4_router_default_decode
       assign default_src_channel = '0;
     end
     else begin : default_channel_assignment
-      assign default_src_channel = 2'b1 << DEFAULT_CHANNEL;
+      assign default_src_channel = 1'b1 << DEFAULT_CHANNEL;
     end
   endgenerate
 
@@ -73,8 +73,8 @@ module soc_system_mm_interconnect_4_router_default_decode
       assign default_rd_channel = '0;
     end
     else begin : default_rw_channel_assignment
-      assign default_wr_channel = 2'b1 << DEFAULT_WR_CHANNEL;
-      assign default_rd_channel = 2'b1 << DEFAULT_RD_CHANNEL;
+      assign default_wr_channel = 1'b1 << DEFAULT_WR_CHANNEL;
+      assign default_rd_channel = 1'b1 << DEFAULT_RD_CHANNEL;
     end
   endgenerate
 
@@ -103,7 +103,7 @@ module soc_system_mm_interconnect_4_router
     // -------------------
     output                          src_valid,
     output reg [146-1    : 0] src_data,
-    output reg [2-1 : 0] src_channel,
+    output reg [1-1 : 0] src_channel,
     output                          src_startofpacket,
     output                          src_endofpacket,
     input                           src_ready
@@ -119,7 +119,7 @@ module soc_system_mm_interconnect_4_router
     localparam PKT_PROTECTION_H = 136;
     localparam PKT_PROTECTION_L = 134;
     localparam ST_DATA_W = 146;
-    localparam ST_CHANNEL_W = 2;
+    localparam ST_CHANNEL_W = 1;
     localparam DECODER_TYPE = 0;
 
     localparam PKT_TRANS_WRITE = 106;
@@ -159,7 +159,7 @@ module soc_system_mm_interconnect_4_router
     assign src_startofpacket = sink_startofpacket;
     assign src_endofpacket   = sink_endofpacket;
     wire [PKT_DEST_ID_W-1:0] default_destid;
-    wire [2-1 : 0] default_src_channel;
+    wire [1-1 : 0] default_src_channel;
 
 
 
@@ -190,7 +190,7 @@ module soc_system_mm_interconnect_4_router
            
          if (read_transaction) begin
           // ( 0 .. 100000000 )
-          src_channel = 2'b1;
+          src_channel = 1'b1;
           src_data[PKT_DEST_ID_H:PKT_DEST_ID_L] = 0;
 	     end
         

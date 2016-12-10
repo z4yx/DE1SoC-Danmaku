@@ -80,12 +80,12 @@ module adapter_fifo (
 				.wrusedw ());
 	defparam
 		dcfifo_mixed_widths_component.intended_device_family = "Cyclone V",
-		dcfifo_mixed_widths_component.lpm_numwords = 256,
+		dcfifo_mixed_widths_component.lpm_numwords = 2048,
 		dcfifo_mixed_widths_component.lpm_showahead = "ON",
 		dcfifo_mixed_widths_component.lpm_type = "dcfifo_mixed_widths",
 		dcfifo_mixed_widths_component.lpm_width = 64,
-		dcfifo_mixed_widths_component.lpm_widthu = 8,
-		dcfifo_mixed_widths_component.lpm_widthu_r = 11,
+		dcfifo_mixed_widths_component.lpm_widthu = 11,
+		dcfifo_mixed_widths_component.lpm_widthu_r = 14,
 		dcfifo_mixed_widths_component.lpm_width_r = 8,
 		dcfifo_mixed_widths_component.overflow_checking = "ON",
 		dcfifo_mixed_widths_component.rdsync_delaypipe = 5,
@@ -105,7 +105,7 @@ endmodule
 // Retrieval info: PRIVATE: AlmostFullThr NUMERIC "-1"
 // Retrieval info: PRIVATE: CLOCKS_ARE_SYNCHRONIZED NUMERIC "0"
 // Retrieval info: PRIVATE: Clock NUMERIC "4"
-// Retrieval info: PRIVATE: Depth NUMERIC "256"
+// Retrieval info: PRIVATE: Depth NUMERIC "2048"
 // Retrieval info: PRIVATE: Empty NUMERIC "1"
 // Retrieval info: PRIVATE: Full NUMERIC "1"
 // Retrieval info: PRIVATE: INTENDED_DEVICE_FAMILY STRING "Cyclone V"
@@ -133,12 +133,12 @@ endmodule
 // Retrieval info: PRIVATE: wsUsedW NUMERIC "0"
 // Retrieval info: LIBRARY: altera_mf altera_mf.altera_mf_components.all
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone V"
-// Retrieval info: CONSTANT: LPM_NUMWORDS NUMERIC "256"
+// Retrieval info: CONSTANT: LPM_NUMWORDS NUMERIC "2048"
 // Retrieval info: CONSTANT: LPM_SHOWAHEAD STRING "ON"
 // Retrieval info: CONSTANT: LPM_TYPE STRING "dcfifo_mixed_widths"
 // Retrieval info: CONSTANT: LPM_WIDTH NUMERIC "64"
-// Retrieval info: CONSTANT: LPM_WIDTHU NUMERIC "8"
-// Retrieval info: CONSTANT: LPM_WIDTHU_R NUMERIC "11"
+// Retrieval info: CONSTANT: LPM_WIDTHU NUMERIC "11"
+// Retrieval info: CONSTANT: LPM_WIDTHU_R NUMERIC "14"
 // Retrieval info: CONSTANT: LPM_WIDTH_R NUMERIC "8"
 // Retrieval info: CONSTANT: OVERFLOW_CHECKING STRING "ON"
 // Retrieval info: CONSTANT: RDSYNC_DELAYPIPE NUMERIC "5"
