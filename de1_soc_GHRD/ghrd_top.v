@@ -219,6 +219,9 @@ module ghrd_top(
   wire        hpd_o;
   wire        overlay_valid, overlay_ready;
   wire [63:0] overlay_data;
+
+  wire [15:0] pxl_width;
+  wire [15:0] pxl_height;
 // connection of internal logics
   assign LEDR[9:2] = fpga_led_internal;
   assign stm_hw_events    = {{4{1'b0}}, SW, fpga_led_internal, fpga_debounced_buttons};
@@ -329,6 +332,7 @@ soc_system u0 (
 	  .overlay_ready(overlay_ready),                   //                               .ready
     .edid_scl      (GPIO_0[32]),
     .edid_sda       (GPIO_0[33]),
+        .info_resolution                   ({pxl_width[15:0], pxl_height[15:0]}) ,                   //                           info.resolution
 
         .hps_0_h2f_loan_io_in                   (loanio2fpga),                   //              hps_0_h2f_loan_io.in
         .hps_0_h2f_loan_io_out                  (),                  //                               .out
@@ -439,9 +443,6 @@ tfp401a dvi_in_1(
     .pixel_g_o(pixel_g_to_overlay),
     .pixel_b_o(pixel_b_to_overlay)
 );
-
-wire [15:0] pxl_width;
-wire [15:0] pxl_height;
 
 wire[31:0] pixel_fifo_data;
 wire pixel_fifo_req;

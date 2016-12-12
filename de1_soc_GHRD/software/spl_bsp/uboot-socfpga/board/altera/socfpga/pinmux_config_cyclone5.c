@@ -148,7 +148,7 @@ unsigned long sys_mgr_init_table[CONFIG_HPS_PINMUX_NUM] = {
 	0, /* GPLINMUX68 */
 	0, /* GPLINMUX69 */
 	0, /* GPLINMUX70 */
-	1, /* GPLMUX0 */
+	0, /* GPLMUX0 */
 	1, /* GPLMUX1 */
 	1, /* GPLMUX2 */
 	1, /* GPLMUX3 */
@@ -206,7 +206,7 @@ unsigned long sys_mgr_init_table[CONFIG_HPS_PINMUX_NUM] = {
 	1, /* GPLMUX55 */
 	1, /* GPLMUX56 */
 	1, /* GPLMUX57 */
-	1, /* GPLMUX58 */
+	0, /* GPLMUX58 */
 	1, /* GPLMUX59 */
 	1, /* GPLMUX60 */
 	1, /* GPLMUX61 */

@@ -28,8 +28,8 @@
 // ------------------------------------------
 // Generation parameters:
 //   output_name:         soc_system_mm_interconnect_0_cmd_demux
-//   ST_DATA_W:           241
-//   ST_CHANNEL_W:        12
+//   ST_DATA_W:           233
+//   ST_CHANNEL_W:        2
 //   NUM_OUTPUTS:         1
 //   VALID_WIDTH:         1
 // ------------------------------------------
@@ -46,8 +46,8 @@ module soc_system_mm_interconnect_0_cmd_demux
     // Sink
     // -------------------
     input  [1-1      : 0]   sink_valid,
-    input  [241-1    : 0]   sink_data, // ST_DATA_W=241
-    input  [12-1 : 0]   sink_channel, // ST_CHANNEL_W=12
+    input  [233-1    : 0]   sink_data, // ST_DATA_W=233
+    input  [2-1 : 0]   sink_channel, // ST_CHANNEL_W=2
     input                         sink_startofpacket,
     input                         sink_endofpacket,
     output                        sink_ready,
@@ -56,8 +56,8 @@ module soc_system_mm_interconnect_0_cmd_demux
     // Sources 
     // -------------------
     output reg                      src0_valid,
-    output reg [241-1    : 0] src0_data, // ST_DATA_W=241
-    output reg [12-1 : 0] src0_channel, // ST_CHANNEL_W=12
+    output reg [233-1    : 0] src0_data, // ST_DATA_W=233
+    output reg [2-1 : 0] src0_channel, // ST_CHANNEL_W=2
     output reg                      src0_startofpacket,
     output reg                      src0_endofpacket,
     input                           src0_ready,
@@ -94,7 +94,7 @@ module soc_system_mm_interconnect_0_cmd_demux
     // -------------------
     assign ready_vector[0] = src0_ready;
 
-    assign sink_ready = |(sink_channel & {{11{1'b0}},{ready_vector[NUM_OUTPUTS - 1 : 0]}});
+    assign sink_ready = |(sink_channel & {{1{1'b0}},{ready_vector[NUM_OUTPUTS - 1 : 0]}});
 
 endmodule
 

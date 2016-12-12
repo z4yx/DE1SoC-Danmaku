@@ -71,6 +71,7 @@
 			hps_0_hps_io_hps_io_gpio_inst_LOANIO00 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO00
 			hps_0_hps_io_hps_io_gpio_inst_LOANIO58 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO58
 			hps_0_hps_io_hps_io_gpio_inst_LOANIO62 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO62
+			info_resolution                        : in    std_logic_vector(31 downto 0) := (others => 'X'); -- resolution
 			led_pio_external_connection_export     : out   std_logic_vector(9 downto 0);                     -- export
 			memory_mem_a                           : out   std_logic_vector(14 downto 0);                    -- mem_a
 			memory_mem_ba                          : out   std_logic_vector(2 downto 0);                     -- mem_ba

@@ -15,7 +15,7 @@ module pixel_data_adapter (
 
 wire [63:0] rev_order;
 wire wrfull;
-wire [3:0] short;
+wire [7:0] short;
 wire [31:0] mapped_pixel;
 assign ready_src = ~wrfull;
 assign rev_order = {data_src[7:0],data_src[15:8],data_src[23:16],data_src[31:24],
@@ -33,7 +33,7 @@ adapter_fifo fifo( //fifo in showahead mode
     );
 
 color_mapper mapper(
-  .short(short),
+  .short(short[3:0]),
   .long (mapped_pixel),
 );
 

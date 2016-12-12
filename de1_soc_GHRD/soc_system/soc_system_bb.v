@@ -71,6 +71,7 @@ module soc_system (
 	hps_0_hps_io_hps_io_gpio_inst_LOANIO00,
 	hps_0_hps_io_hps_io_gpio_inst_LOANIO58,
 	hps_0_hps_io_hps_io_gpio_inst_LOANIO62,
+	info_resolution,
 	led_pio_external_connection_export,
 	memory_mem_a,
 	memory_mem_ba,
@@ -164,6 +165,7 @@ module soc_system (
 	inout		hps_0_hps_io_hps_io_gpio_inst_LOANIO00;
 	inout		hps_0_hps_io_hps_io_gpio_inst_LOANIO58;
 	inout		hps_0_hps_io_hps_io_gpio_inst_LOANIO62;
+	input	[31:0]	info_resolution;
 	output	[9:0]	led_pio_external_connection_export;
 	output	[14:0]	memory_mem_a;
 	output	[2:0]	memory_mem_ba;
