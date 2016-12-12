@@ -15,8 +15,6 @@
 
 #define REG_OFF32(base, number) ((volatile uint32_t*)((uintptr_t)(base)+4*(number)))
 
-// #define FRAME_BUFFER_SIZE (2000*1100*4/8+7 & ~7)
-
 typedef struct{
     int fd_devmem;
     int fd_udmabuf0;
@@ -34,7 +32,7 @@ typedef struct{
 void start_udmabuf(void)
 {
     system("rmmod udmabuf");
-    system("modprobe udmabuf udmabuf0=6291456 udmabuf1=67108864");
+    system("modprobe udmabuf udmabuf0=16777216 udmabuf1=67108864");
     system("echo 6 >/sys/class/udmabuf/udmabuf1/sync_mode");
 }
 
@@ -109,7 +107,7 @@ DANMAKU_HW_HANDLE DanmakuHW_Open(void)
     ctx->sz_udmabuf0 = udmabuf0_size;
     ctx->paddr_dyn_area = udmabuf1_phys;
     ctx->sz_dyn_area = udmabuf1_size;
-    if(FRAME_BUFFER_SIZE*2 > ctx->sz_udmabuf0){
+    if(FRAME_BUFFER_SIZE*NUM_FRAME_BUFFER > ctx->sz_udmabuf0){
         fprintf(stderr, "frame buffer exceeded udmabuf0 size\n");
         return NULL;
     }
@@ -195,6 +193,7 @@ void DanmakuHW_LoadEDID(DANMAKU_HW_HANDLE h, uint8_t* content, uint32_t length)
 uintptr_t DanmakuHW_GetFrameBuffer(DANMAKU_HW_HANDLE h, int buf_index)
 {
     driver_ctx* ctx = (driver_ctx*)h;
+    assert(buf_index >= 0 && buf_index < NUM_FRAME_BUFFER);
     return ctx->paddr_fb+buf_index*FRAME_BUFFER_SIZE;
 }
 void DanmakuHW_RenderStartDMA(DANMAKU_HW_HANDLE h,uintptr_t dst, uintptr_t src, uint32_t length)
@@ -229,7 +228,7 @@ int DanmakuHW_FrameBufferTxmit(DANMAKU_HW_HANDLE h, int buf_index, uint32_t leng
     uintptr_t dma_csr = ctx->uaddr_perph_base+0x100;
     uintptr_t dma_desc = ctx->uaddr_perph_base+0x180;
 
-    assert(buf_index >= 0 && buf_index < 2);
+    assert(buf_index >= 0 && buf_index < NUM_FRAME_BUFFER);
     assert(length <= FRAME_BUFFER_SIZE);
     assert((length & 0x7) == 0);
 

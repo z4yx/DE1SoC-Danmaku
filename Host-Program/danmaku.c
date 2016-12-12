@@ -16,6 +16,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include "ring.h"
 #include "constants.h"
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
@@ -275,8 +276,17 @@ void InitBlankScreen(void)
 // clear screen
 void ClearScreen(uint8_t *dst)
 {
-    DanmakuHW_RenderStartDMA(hDriver, dst, blank_screen_phy, img_size);
-}
+    int blocks = 8;
+    int blk_size = img_size/blocks;
+    for (int i = blocks-1; i >= 0; --i)
+    {
+        DanmakuHW_RenderStartDMA(hDriver, dst+blk_size*i, blank_screen_phy+blk_size*i, blk_size);
+        // usleep(100);
+    }
+    if(img_size%blocks!=0){
+        DanmakuHW_RenderStartDMA(hDriver, dst+blk_size*blocks, blank_screen_phy+blk_size*blocks, img_size%blocks);
+    }
+}   
 
 
 // ==========================
@@ -529,35 +539,36 @@ void RenderOnce(uint8_t* buf)
     for (int i = 0; i < SLIDING_LAYER_ROWS; i++) {
         for (int j = 0; j < SLIDING_LAYER_COLS; j++) {
             SlidingWritePixels(buf, &sliding_layers[i][j]);
+            // usleep(1000);
         }
     }
     for (int i = 0; i < NUM_STATIC_LAYER; i++) {
         StaticWritePixels(buf, &static_layers[i]);
+        // usleep(1000);
     }
 }
 
 void Render()
 {
-    int cs = 1;
     int dbg = 0;
 
     pthread_mutex_lock(&render_overlay_mutex);
-    ClearScreen((void*)DanmakuHW_GetFrameBuffer(hDriver, 0));
-    ClearScreen((void*)DanmakuHW_GetFrameBuffer(hDriver, 1));
+    for(int i=0; i<NUM_FRAME_BUFFER; i++)
+        ClearScreen((void*)DanmakuHW_GetFrameBuffer(hDriver, i));
+    while(!DanmakuHW_RenderDMAIdle(hDriver));
     render_running = 1;
     while (render_running) {
+        int idx;
+        while((idx = GetEmptyBuffer()) == -1);
 #ifdef SIM_MODE
         uint8_t fb[MAX_IMG_SIZE];
 #else
-        void* fb = (void*)DanmakuHW_GetFrameBuffer(hDriver, cs);
+        void* fb = (void*)DanmakuHW_GetFrameBuffer(hDriver, idx);
 #endif
         RenderOnce((uint8_t*)fb);
         while(!DanmakuHW_RenderDMAIdle(hDriver));
-        printf("render %d done\n", cs);
-        pthread_cond_wait(&render_overlay_cv, &render_overlay_mutex);
-        // if(++dbg<200)
-            cs = !cs;
-        // while(1)pthread_yield(); /////////
+        printf("render %d done\n", idx);
+        CommitBuffer();
     }
     render_running = 0;
     pthread_mutex_unlock(&render_overlay_mutex);
@@ -565,32 +576,29 @@ void Render()
 
 void *Thread4Overlay(void *t) 
 {
-    int cs = 1;
     int dbg = 0;
+    int repeat = 0;
+    int idx;
 
     while(!render_running);
     printf("Thread4Overlay started\n");
 
+    while((idx = GetFilledBuffer()) == -1);
     for(;render_running;){
-        DanmakuHW_FrameBufferTxmit(hDriver, cs, img_size);
-        printf("transmitting %d\n", cs);
+        DanmakuHW_FrameBufferTxmit(hDriver, idx, img_size);
+        printf("transmitting %d\n", idx);
 
         while(DanmakuHW_PendingTxmit(hDriver));
 
-        if(pthread_mutex_trylock(&render_overlay_mutex) == 0){
+        if((++repeat >= 2) && RingSize() > 2){
             //render done, switching buffer
 
             while(DanmakuHW_OverlayBusy(hDriver));
-            // if(++dbg<200)
-                cs = !cs;
-/*
-            DanmakuHW_FrameBufferTxmit(hDriver, cs, img_size);
+            ReleaseBuffer();
 
-            //ensure old buffer not being used
-            while(DanmakuHW_PendingTxmit(hDriver));
-*/
-            pthread_cond_signal(&render_overlay_cv);
-            pthread_mutex_unlock(&render_overlay_mutex);
+            idx = GetFilledBuffer();
+
+            repeat = 0;
         }
     }
     pthread_exit(NULL);

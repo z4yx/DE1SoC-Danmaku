@@ -25,6 +25,7 @@
 
 #define MAX_IMG_SIZE ((((MAX_WIDTH + 2) * MAX_SCREEN_HEIGHT) + 3) & (~3))
 #define FRAME_BUFFER_SIZE MAX_IMG_SIZE
+#define NUM_FRAME_BUFFER 5
 
 #define QSYS_SYSTEMID 0xacd51302
 
