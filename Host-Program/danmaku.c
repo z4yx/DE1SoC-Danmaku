@@ -566,7 +566,7 @@ void Render()
         void* fb = (void*)DanmakuHW_GetFrameBuffer(hDriver, idx);
 #endif
         RenderOnce((uint8_t*)fb);
-        while(!DanmakuHW_RenderDMAIdle(hDriver));
+        while(render_running && !DanmakuHW_RenderDMAIdle(hDriver));
         printf("render %d done\n", idx);
         CommitBuffer();
     }
@@ -588,12 +588,12 @@ void *Thread4Overlay(void *t)
         DanmakuHW_FrameBufferTxmit(hDriver, idx, img_size);
         printf("transmitting %d\n", idx);
 
-        while(DanmakuHW_PendingTxmit(hDriver));
+        while(render_running && DanmakuHW_PendingTxmit(hDriver));
 
         if((++repeat >= 2) && RingSize() > 2){
             //render done, switching buffer
 
-            while(DanmakuHW_OverlayBusy(hDriver));
+            while(render_running && DanmakuHW_OverlayBusy(hDriver));
             ReleaseBuffer();
 
             idx = GetFilledBuffer();

@@ -36,6 +36,52 @@ void start_udmabuf(void)
     system("echo 6 >/sys/class/udmabuf/udmabuf1/sync_mode");
 }
 
+void sdram_qos_settings(driver_ctx* ctx)
+{
+    int PRIO[10] = {6,5,5,0,0,0,7,7,7,7};
+    int WEIGHTS[10] = {24,0,0,1,1,1,16,16,15,15};
+    int SUM[8] = {0};
+
+    uintptr_t sdr_base = 
+        (uintptr_t)mmap(NULL, 0x1000, PROT_READ | PROT_WRITE, 
+                        MAP_SHARED, ctx->fd_devmem, 0xFFC25000);
+    if(sdr_base == -1){
+        perror("mmap sdr ctl");
+        return;
+    }
+    printf("Original QoS Settings:\n");
+    printf("mppriority: %lx\n", *REG_OFF32(sdr_base, 43));
+    printf("mpweight_0_4: %lx\n", *REG_OFF32(sdr_base, 44));
+    printf("mpweight_1_4: %lx\n", *REG_OFF32(sdr_base, 45));
+    printf("mpweight_2_4: %lx\n", *REG_OFF32(sdr_base, 46));
+    printf("mpweight_3_4: %lx\n", *REG_OFF32(sdr_base, 47));
+
+    uint32_t mppriority = 0;
+    uint64_t staticweight = 0, sumofweights = 0;
+    for (int i = 10-1; i >= 0; --i){
+        SUM[PRIO[i]] += WEIGHTS[i];
+        mppriority = (mppriority<<3)|PRIO[i];
+    }
+    printf("New QoS Settings:\n");
+    printf("mppriority: %lx\n", mppriority);
+    for (int i = 10-1; i >= 0; --i)
+        staticweight = (staticweight<<5)|WEIGHTS[i];
+    for (int i = 8-1; i >= 0; --i)
+        sumofweights = (sumofweights<<8)|SUM[i];
+    printf("staticweight=%llx sumofweights=%llx\n",staticweight, sumofweights);
+    printf("mpweight_0_4: %lx\n", (uint32_t)staticweight);
+    printf("mpweight_1_4: %lx\n", (uint32_t)((sumofweights<<18)|(staticweight>>32)));
+    printf("mpweight_2_4: %lx\n", (uint32_t)(sumofweights>>14));
+    printf("mpweight_3_4: %lx\n", (uint32_t)(sumofweights>>46));
+    *REG_OFF32(sdr_base, 43) = mppriority;
+    *REG_OFF32(sdr_base, 44) = (uint32_t)staticweight;
+    *REG_OFF32(sdr_base, 45) = (uint32_t)((sumofweights<<18)|(staticweight>>32));
+    *REG_OFF32(sdr_base, 46) = (uint32_t)(sumofweights>>14);
+    *REG_OFF32(sdr_base, 47) = (uint32_t)(sumofweights>>46);
+
+    munmap(sdr_base, 0x1000);
+}
+
 DANMAKU_HW_HANDLE DanmakuHW_Open(void)
 {
     char attr[1024]={0};
@@ -156,6 +202,8 @@ DANMAKU_HW_HANDLE DanmakuHW_Open(void)
         perror("mmap /dev/udmabuf1");
         goto fail_unmap_udmabuf0;
     }
+
+    sdram_qos_settings(ctx);
 
     return (DANMAKU_HW_HANDLE)ctx;
 
