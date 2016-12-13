@@ -16,19 +16,19 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include "render.h"
 #include "ring.h"
 #include "constants.h"
 
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
 
 pthread_mutex_t render_overlay_mutex;
 pthread_cond_t  render_overlay_cv;
 
-// global
-FT_Library library;
-FT_Face face;
-FT_GlyphSlot slot;
+typedef char inp_char_t;
+
 DANMAKU_HW_HANDLE hDriver;
+gpointer render_instance;
+PangoContext *render_context;
 
 int edge; // edge in pixel for each character
 int screen_width; // screen width in pixels
@@ -39,6 +39,15 @@ volatile int render_running;
 
 uint8_t *blank_screen;
 uint32_t blank_screen_phy;
+
+int strlen_utf8_c(char *s) {
+   int i = 0, j = 0;
+   while (s[i]) {
+     if ((s[i] & 0xc0) != 0x80) j++;
+     i++;
+   }
+   return j;
+}
 
 void intHandler(int dummy) {
     render_running = 0;
@@ -83,44 +92,25 @@ void FillBlank(uint8_t map[][MAX_WIDTH * 2], int head, int len)
 // Font map interfaces.
 bool InitFontMap()
 {
-    /* initialize library */
-    error = FT_Init_FreeType(&library);
-    if (error != 0)
-    {
-        fprintf(stderr, "initialize library: error %d\n", error);
-        return false;
-    }
-
-    /* create face object */
-    error = FT_New_Face(library, FONT_FILE_PATH, 0, &face);
-    if (error != 0)
-    {
-        fprintf(stderr, "create face: error %d\n", error);
-        return false;
-    }
-
-    /* set character size */
-    error = FT_Set_Pixel_Sizes(face, edge, 0);
-    if (error != 0)
-    {
-        fprintf(stderr, "set pixel size: error %d\n", error);
-        return false;
-    }
-
-    slot = face->glyph;
+    const PangoViewer *view = &pangoft2_viewer;
+    g_type_init();
+    render_instance = view->create (view);
+    render_context = view->get_context (render_instance);
     return true;
 }
 
 void ClearFontMap()
 {
-    FT_Done_Face(face);
-    FT_Done_FreeType(library);
+    const PangoViewer *view = &pangoft2_viewer;
+    g_object_unref (render_context);
+    view->destroy (render_instance);
 }
 
 uint8_t map1[MAX_HEIGHT][MAX_WIDTH * 2];
 
-void WriteFontMap(uint8_t map[][MAX_WIDTH * 2], int *text, int len)
+void WriteFontMap(uint8_t map[][MAX_WIDTH * 2], inp_char_t *text, int len, int* out_width)
 {
+    const PangoViewer *view = &pangoft2_viewer;
     for (int i = 0; i < edge; i++) {
         for (int j = 0; j < edge * len; j++) {
             map[i][j] = PXL_BLANK;
@@ -131,44 +121,31 @@ void WriteFontMap(uint8_t map[][MAX_WIDTH * 2], int *text, int len)
     int color = rand() % 8; // valid color: 0x0 ~ 0x7
     // printf("color selected: %d\n", color);
     int reverse = color ^ 7;
-    for (int n = 0; n < len; n++) { // for each character
-        // retrieve glyph index from character code in UTF-32
-        FT_UInt glyph_index = FT_Get_Char_Index(face, text[n]);
 
-        // load glyph image into the slot (erase previous one)
-        error = FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT);
-        if (error != 0)
+    render_setopt_text(text);
+
+    gpointer surface;
+    int width=1, height=1;
+    surface = view->create_surface (render_instance, width, height);
+    view->render (render_instance, surface, render_context, &width, &height, NULL);
+    view->destroy_surface (render_instance, surface);
+    surface = view->create_surface (render_instance, width, height);
+    view->render (render_instance, surface, render_context, &width, &height, NULL);
+    printf("render: %dx%d\n", width, height);
+
+    *out_width = MIN(width, MAX_WIDTH);
+
+    FT_Bitmap *bitmap = (FT_Bitmap *) surface;
+    for (int i = 0; i < edge; ++i)
+    {
+        for (int j = 0; j < *out_width; ++j)
         {
-            fprintf(stderr, "load glyph: error %d\n", error);
-            exit(1);
-        }
-
-        // convert to an anti-aliased bitmap
-        error = FT_Render_Glyph(slot, FT_RENDER_MODE_NORMAL);
-        if (error != 0)
-        {
-            fprintf(stderr, "render glyph: error %d\n", error);
-            exit(1);
-        }
-
-        // obtain bit map
-        FT_Bitmap *src = &slot->bitmap;
-
-        int i, j, p, q;
-        int dx = (edge - src->width) / 2;
-        int dy = edge - src->rows;
-
-        for (i = n * edge + dx, p = 0; p < src->width; i++, p++)
-        {
-            for (j = dy, q = 0; q < src->rows; j++, q++)
-            {
-                map1[j][i] = src->buffer[q * src->width + p] < 128 ? PXL_BLANK : color;
-            }
+            map1[i][j] = i>=height || *(bitmap->buffer + i * bitmap->pitch + j) >= 128 ? PXL_BLANK : color;
         }
     }
-
+    view->destroy_surface (render_instance, surface);
     for (int i = 0; i < edge; i++) {
-        for (int j = 0; j < len * edge; j++) {
+        for (int j = 0; j < *out_width; j++) {
             if (map1[i][j] == color) {
                 map[i][j] = map1[i][j];
             } else if (
@@ -216,15 +193,12 @@ void SlidingNextCycle(sliding_layer_t *s)
     }
 }
 
-void SlidingSetDanmu(sliding_layer_t *s, int *text, int len)
+void SlidingSetDanmu(sliding_layer_t *s, inp_char_t *text, int len)
 {
     assert(!s->enable);
 
-    if(len*edge > MAX_WIDTH)
-        len = MAX_WIDTH/edge;
-    WriteFontMap(s->map, text, len);
+    WriteFontMap(s->map, text, len, &s->width);
     s->enable = true;
-    s->width = edge * len;
     s->x = screen_width;
     s->ppc = 1 + ((s->width + screen_width) / CYCLE_PER_DANMU);
 }
@@ -319,31 +293,22 @@ void InitStatic(static_layer_t *s, int y)
     FillBlank(s->map, 0, MAX_WIDTH * 2);
 }
 
-bool StaticSetDanmu(static_layer_t *s, int *text, int len)
+void ForceStaticSetDanmu(static_layer_t *s, inp_char_t *text, int len)
+{
+    // set
+    WriteFontMap(s->map, text, len, &s->valid_len);
+    s->enable = true;
+    s->counter = 0;
+}
+
+bool StaticSetDanmu(static_layer_t *s, inp_char_t *text, int len)
 {
     if (s->enable) {
         return false;
     }
-    if(len*edge > MAX_WIDTH)
-        len = MAX_WIDTH/edge;
-
     // set
-    WriteFontMap(s->map, text, len);
-    s->valid_len = len * edge;
-    s->enable = true;
-    s->counter = 0;
+    ForceStaticSetDanmu(s, text, len);
     return true;
-}
-
-void ForceStaticSetDanmu(static_layer_t *s, int *text, int len)
-{
-    if(len*edge > MAX_WIDTH)
-        len = MAX_WIDTH/edge;
-    // set
-    WriteFontMap(s->map, text, len);
-    s->valid_len = len * edge;
-    s->enable = true;
-    s->counter = 0;
 }
 
 void StaticNextCycle(static_layer_t *s)
@@ -389,16 +354,16 @@ sliding_layer_t sliding_layers[SLIDING_LAYER_ROWS][SLIDING_LAYER_COLS];
 static_layer_t static_layers[NUM_STATIC_LAYER];
 
 // temporary buffer for stdin
-wchar_t input_buf[MAX_TEXT_LEN];
+inp_char_t input_buf[MAX_TEXT_LEN];
 
 bool buf_sliding_saved = false;
 bool buf_static_saved = false;
 
 // ==========================
 // Main render process.
-bool InsertSliding(wchar_t *buf_sliding)
+bool InsertSliding(inp_char_t *buf_sliding)
 {
-    int len = wcslen(buf_sliding);
+    int len = strlen_utf8_c(buf_sliding);
     for (int i = 0; i < SLIDING_LAYER_ROWS; i++) {
         for (int j = 0; j < SLIDING_LAYER_COLS; j++) {
             if (!sliding_layers[i][j].enable) {
@@ -422,9 +387,9 @@ bool InsertSliding(wchar_t *buf_sliding)
     return false;
 }
 
-bool InsertStatic(wchar_t *buf_static)
+bool InsertStatic(inp_char_t *buf_static)
 {
-    int len = wcslen(buf_static);
+    int len = strlen_utf8_c(buf_static);
     for (int i = 0; i < NUM_STATIC_LAYER; i++) {
         if (StaticSetDanmu(&static_layers[i], buf_static, len)) {
             // printf("inserted into static layer %d, len=%d\n", i, len);
@@ -441,7 +406,7 @@ bool InsertStatic(wchar_t *buf_static)
 #define QUEEN_SIZE 4096
 
 typedef struct {
-    wchar_t str[QUEEN_SIZE][MAX_TEXT_LEN];
+    inp_char_t str[QUEEN_SIZE][MAX_TEXT_LEN];
     int head;
     int tail;
 } queen_t;
@@ -452,13 +417,13 @@ void InitQueen(queen_t *queen)
     queen->tail = 0;
 }
 
-bool Fetch(queen_t *queen, wchar_t *dst)
+bool Fetch(queen_t *queen, inp_char_t *dst)
 {
     if (queen->tail == queen->head) {
         return false;
     }
 
-    wcscpy(dst, queen->str[queen->head]);
+    strcpy(dst, queen->str[queen->head]);
     return true;
 }
 
@@ -473,18 +438,18 @@ void ClearQueen(queen_t *queen)
 {
     int len = queen->tail - queen->head;
     for (int i = 0; i < len; i++) {
-        wcscpy(queen->str[i], queen->str[queen->head + i]);
+        strcpy(queen->str[i], queen->str[queen->head + i]);
     }
     queen->head = 0;
     queen->tail = len;
 }
 
-void Push(queen_t *queen, wchar_t *src)
+void Push(queen_t *queen, inp_char_t *src)
 {
     if (queen->tail >= QUEEN_SIZE) {
         ClearQueen(queen);
     }
-    wcscpy(queen->str[queen->tail++], src);
+    strcpy(queen->str[queen->tail++], src);
 }
 
 queen_t sliding_queen, static_queen;
@@ -494,13 +459,13 @@ void RenderOnce(uint8_t* buf)
     ClearScreen(buf);
 
     // save danum
-    wchar_t *ret = fgetws(input_buf, MAX_TEXT_LEN, stdin);
+    inp_char_t *ret = fgets(input_buf, MAX_TEXT_LEN, stdin);
     if (ret == NULL) {
         // printf("nothing fetched\n");
     } else {
         // printf("fetched:\n");
         // fputws(input_buf + 1, stdout);
-        // int len = wcslen(input_buf + 1);
+        // int len = strlen_utf8_c(input_buf + 1);
         // printf("codes:");
         // for (int i = 1; i < len; i++) {
             // printf("%d ", input_buf[i]);
@@ -521,7 +486,7 @@ void RenderOnce(uint8_t* buf)
     }
 
     // fetch danmu
-    wchar_t tmp[MAX_TEXT_LEN];
+    inp_char_t tmp[MAX_TEXT_LEN];
 
     bool r = Fetch(&sliding_queen, tmp);
     if (r && InsertSliding(tmp)) {
@@ -572,6 +537,7 @@ void Render()
     render_running = 1;
     while (render_running) {
         int idx;
+        while(RingSize() >= NUM_FRAME_BUFFER-1);
         while((idx = GetEmptyBuffer()) == -1);
 #ifdef SIM_MODE
         uint8_t fb[MAX_IMG_SIZE];
@@ -589,8 +555,6 @@ void Render()
 
 void *Thread4Overlay(void *t) 
 {
-    int dbg = 0;
-    int repeat = 0;
     int idx;
 
     while(!render_running);
@@ -598,20 +562,18 @@ void *Thread4Overlay(void *t)
 
     while((idx = GetFilledBuffer()) == -1);
     for(;render_running;){
-        DanmakuHW_FrameBufferTxmit(hDriver, idx, img_size);
-        // printf("transmitting %d\n", idx);
+        for(int i=0; i<2; i++)
+            DanmakuHW_FrameBufferTxmit(hDriver, idx, img_size);
 
         while(render_running && DanmakuHW_PendingTxmit(hDriver));
-
-        if((++repeat >= 2) && RingSize() > 2){
+        if(RingSize() > 2){
             //render done, switching buffer
 
-            while(render_running && DanmakuHW_OverlayBusy(hDriver));
+            // while(render_running && DanmakuHW_OverlayBusy(hDriver));
             ReleaseBuffer();
 
             idx = GetFilledBuffer();
 
-            repeat = 0;
         }
     }
     pthread_exit(NULL);
@@ -635,6 +597,7 @@ void SubMain()
     // PCIE_Write32(hDriver, PCIE_USER_BAR, REG_IMGSIZE, (uint32_t)img_size);
 
     edge = screen_width / 20;
+    render_setopt_dpi(edge*4);
     InitBlankScreen();
     InitFontMap();
     printf("character: %d * %d\n", edge, edge);
