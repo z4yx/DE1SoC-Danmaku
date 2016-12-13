@@ -30,10 +30,10 @@ FT_Face face;
 FT_GlyphSlot slot;
 DANMAKU_HW_HANDLE hDriver;
 
-unsigned int edge; // edge in pixel for each character
-unsigned int screen_width; // screen width in pixels
-unsigned int screen_height; // screen height in pixels
-unsigned int img_size;
+int edge; // edge in pixel for each character
+int screen_width; // screen width in pixels
+int screen_height; // screen height in pixels
+int img_size;
 int error; // last error code
 volatile int render_running;
 
@@ -238,14 +238,18 @@ void SlidingWritePixels(uint8_t *dst, sliding_layer_t *s)
     uint32_t line_base = y * (screen_width + 2);
     int xfrom = s->x;
     int xto = s->x + s->width - 1;
+    int src_x = 0;
     if(xfrom >= screen_width || xto < 0)
         return;
-    if(xfrom < 0) xfrom = 0;
+    if(xfrom < 0){
+        src_x = -xfrom;
+        xfrom = 0;
+    }
     if(xto >= screen_width) xto = screen_width-1;
     for (int i = 0; i < edge; i++) {
         uint32_t addr_xfrom = (line_base + xfrom);
         uint32_t addr_xto = (line_base + xto);
-        DanmakuHW_RenderStartDMA(hDriver, &dst[addr_xfrom], &s->map_phy[i][0], addr_xto - addr_xfrom + 1);
+        DanmakuHW_RenderStartDMA(hDriver, &dst[addr_xfrom], &s->map_phy[i][src_x], addr_xto - addr_xfrom + 1);
         line_base += (screen_width + 2);
     }
 }
@@ -278,6 +282,7 @@ void ClearScreen(uint8_t *dst)
 {
     int blocks = 8;
     int blk_size = img_size/blocks;
+    /*
     for (int i = blocks-1; i >= 0; --i)
     {
         DanmakuHW_RenderStartDMA(hDriver, dst+blk_size*i, blank_screen_phy+blk_size*i, blk_size);
@@ -286,6 +291,8 @@ void ClearScreen(uint8_t *dst)
     if(img_size%blocks!=0){
         DanmakuHW_RenderStartDMA(hDriver, dst+blk_size*blocks, blank_screen_phy+blk_size*blocks, img_size%blocks);
     }
+    */
+    DanmakuHW_RenderStartDMA(hDriver, dst, blank_screen_phy, img_size);
 }   
 
 
@@ -586,7 +593,7 @@ void *Thread4Overlay(void *t)
     while((idx = GetFilledBuffer()) == -1);
     for(;render_running;){
         DanmakuHW_FrameBufferTxmit(hDriver, idx, img_size);
-        printf("transmitting %d\n", idx);
+        // printf("transmitting %d\n", idx);
 
         while(render_running && DanmakuHW_PendingTxmit(hDriver));
 
