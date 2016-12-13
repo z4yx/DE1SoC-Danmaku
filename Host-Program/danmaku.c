@@ -220,6 +220,8 @@ void SlidingSetDanmu(sliding_layer_t *s, int *text, int len)
 {
     assert(!s->enable);
 
+    if(len*edge > MAX_WIDTH)
+        len = MAX_WIDTH/edge;
     WriteFontMap(s->map, text, len);
     s->enable = true;
     s->width = edge * len;
@@ -322,6 +324,8 @@ bool StaticSetDanmu(static_layer_t *s, int *text, int len)
     if (s->enable) {
         return false;
     }
+    if(len*edge > MAX_WIDTH)
+        len = MAX_WIDTH/edge;
 
     // set
     WriteFontMap(s->map, text, len);
@@ -333,6 +337,8 @@ bool StaticSetDanmu(static_layer_t *s, int *text, int len)
 
 void ForceStaticSetDanmu(static_layer_t *s, int *text, int len)
 {
+    if(len*edge > MAX_WIDTH)
+        len = MAX_WIDTH/edge;
     // set
     WriteFontMap(s->map, text, len);
     s->valid_len = len * edge;
