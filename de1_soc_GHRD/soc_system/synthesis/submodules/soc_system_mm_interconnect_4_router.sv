@@ -167,8 +167,8 @@ module soc_system_mm_interconnect_4_router
     // -------------------------------------------------------
     // Write and read transaction signals
     // -------------------------------------------------------
-    wire read_transaction;
-    assign read_transaction  = sink_data[PKT_TRANS_READ];
+    wire write_transaction;
+    assign write_transaction = sink_data[PKT_TRANS_WRITE];
 
 
     soc_system_mm_interconnect_4_router_default_decode the_default_decode(
@@ -188,7 +188,7 @@ module soc_system_mm_interconnect_4_router
         // Sets the channel and destination ID based on the address
         // --------------------------------------------------
            
-         if (read_transaction) begin
+         if (write_transaction) begin
           // ( 0 .. 100000000 )
           src_channel = 1'b1;
           src_data[PKT_DEST_ID_H:PKT_DEST_ID_L] = 0;
