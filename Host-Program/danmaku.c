@@ -21,6 +21,7 @@
 #include "ring.h"
 #include "constants.h"
 
+// #define PROFILE_PRINT
 
 pthread_mutex_t render_overlay_mutex;
 pthread_cond_t  render_overlay_cv;
@@ -473,6 +474,9 @@ void RenderOnce(uint8_t* buf)
         // }
         // printf("\n");
         // printf("type: %d\n", input_buf[0]);
+        int l = strlen(ret);
+        if(l > 1 && ret[l-1] < ' ')
+            ret[l-1]='\0'; //remove \n
         switch (input_buf[0]) {
             case '0':
                 Push(&sliding_queen, input_buf + 1);
@@ -529,15 +533,13 @@ void RenderOnce(uint8_t* buf)
 
 void Render()
 {
-    int dbg = 0;
-
+    struct timespec begin, end;
     pthread_mutex_lock(&render_overlay_mutex);
     for(int i=0; i<NUM_FRAME_BUFFER; i++)
         ClearScreen((void*)DanmakuHW_GetFrameBuffer(hDriver, i));
     while(!DanmakuHW_RenderDMAIdle(hDriver));
     render_running = 1;
     while (render_running) {
-        struct timespec begin, end;
         int idx;
         while(RingSize() >= NUM_FRAME_BUFFER-1);
         while((idx = GetEmptyBuffer()) == -1);
@@ -546,12 +548,16 @@ void Render()
 #else
         void* fb = (void*)DanmakuHW_GetFrameBuffer(hDriver, idx);
 #endif
+#ifdef PROFILE_PRINT
         clock_gettime(CLOCK_MONOTONIC, &begin);
+#endif
         RenderOnce((uint8_t*)fb);
         while(render_running && !DanmakuHW_RenderDMAIdle(hDriver));
+#ifdef PROFILE_PRINT
         clock_gettime(CLOCK_MONOTONIC, &end);
         printf("render %d done, %lf\n", 
             idx, end.tv_sec - begin.tv_sec + 1e-9*(end.tv_nsec - begin.tv_nsec));
+#endif
         CommitBuffer();
     }
     render_running = 0;
@@ -573,16 +579,20 @@ void *Thread4Overlay(void *t)
         while(render_running && DanmakuHW_PendingTxmit(hDriver));
         if(RingSize() > 2){
             //render done, switching buffer
+#ifdef PROFILE_PRINT
             clock_gettime(CLOCK_MONOTONIC, &end);
             printf("switching, %lf\n", 
                 idx, end.tv_sec - begin.tv_sec + 1e-9*(end.tv_nsec - begin.tv_nsec));
+#endif
 
             // while(render_running && DanmakuHW_OverlayBusy(hDriver));
             ReleaseBuffer();
 
             idx = GetFilledBuffer();
 
+#ifdef PROFILE_PRINT
             clock_gettime(CLOCK_MONOTONIC, &begin);
+#endif
         }
     }
     pthread_exit(NULL);
