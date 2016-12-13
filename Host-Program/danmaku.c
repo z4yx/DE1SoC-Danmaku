@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
+#include <time.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -536,6 +537,7 @@ void Render()
     while(!DanmakuHW_RenderDMAIdle(hDriver));
     render_running = 1;
     while (render_running) {
+        struct timespec begin, end;
         int idx;
         while(RingSize() >= NUM_FRAME_BUFFER-1);
         while((idx = GetEmptyBuffer()) == -1);
@@ -544,9 +546,12 @@ void Render()
 #else
         void* fb = (void*)DanmakuHW_GetFrameBuffer(hDriver, idx);
 #endif
+        clock_gettime(CLOCK_MONOTONIC, &begin);
         RenderOnce((uint8_t*)fb);
         while(render_running && !DanmakuHW_RenderDMAIdle(hDriver));
-        printf("render %d done\n", idx);
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        printf("render %d done, %lf\n", 
+            idx, end.tv_sec - begin.tv_sec + 1e-9*(end.tv_nsec - begin.tv_nsec));
         CommitBuffer();
     }
     render_running = 0;
@@ -555,6 +560,7 @@ void Render()
 
 void *Thread4Overlay(void *t) 
 {
+    struct timespec begin, end;
     int idx;
 
     while(!render_running);
@@ -562,18 +568,21 @@ void *Thread4Overlay(void *t)
 
     while((idx = GetFilledBuffer()) == -1);
     for(;render_running;){
-        for(int i=0; i<2; i++)
-            DanmakuHW_FrameBufferTxmit(hDriver, idx, img_size);
+        DanmakuHW_FrameBufferTxmit(hDriver, idx, img_size);
 
         while(render_running && DanmakuHW_PendingTxmit(hDriver));
         if(RingSize() > 2){
             //render done, switching buffer
+            clock_gettime(CLOCK_MONOTONIC, &end);
+            printf("switching, %lf\n", 
+                idx, end.tv_sec - begin.tv_sec + 1e-9*(end.tv_nsec - begin.tv_nsec));
 
             // while(render_running && DanmakuHW_OverlayBusy(hDriver));
             ReleaseBuffer();
 
             idx = GetFilledBuffer();
 
+            clock_gettime(CLOCK_MONOTONIC, &begin);
         }
     }
     pthread_exit(NULL);

@@ -20,12 +20,12 @@
 
 // parameters
 #define FONT_FILE_PATH "SourceHanSansCN-Bold.otf"
-#define CYCLE_PER_DANMU    512
-#define DURATION           500
+#define CYCLE_PER_DANMU    384
+#define DURATION           100
 
 #define MAX_IMG_SIZE ((((MAX_WIDTH + 2) * MAX_SCREEN_HEIGHT) + 3) & (~3))
 #define FRAME_BUFFER_SIZE MAX_IMG_SIZE
-#define NUM_FRAME_BUFFER 5
+#define NUM_FRAME_BUFFER 7
 
 #define QSYS_SYSTEMID 0xacd51302
 
