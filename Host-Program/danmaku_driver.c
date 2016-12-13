@@ -38,8 +38,8 @@ void start_udmabuf(void)
 
 void sdram_qos_settings(driver_ctx* ctx)
 {
-    int PRIO[10] = {6,5,5,0,0,0,7,7,7,7};
-    int WEIGHTS[10] = {24,0,0,1,1,1,16,16,15,15};
+    int PRIO[10] = {6,6,6,0,0,0,7,7,7,7};
+    int WEIGHTS[10] = {24,6,6,1,1,1,16,16,15,15};
     int SUM[8] = {0};
 
     uintptr_t sdr_base = 
@@ -304,7 +304,7 @@ int DanmakuHW_OverlayBusy(DANMAKU_HW_HANDLE h)
 {
     driver_ctx* ctx = (driver_ctx*)h;
     uintptr_t dma_csr = ctx->uaddr_perph_base+0x100;
-    return !(*REG_OFF32(dma_csr, 0) & 1);
+    return (*REG_OFF32(dma_csr, 0) & 1);
 }
 void DanmakuHW_GetFrameSize(DANMAKU_HW_HANDLE h, unsigned int* height, unsigned int* width)
 {
