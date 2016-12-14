@@ -8,6 +8,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "sleep": "^5.0.0",
     "request": "^2.67.0",
     "coffee-script": ""
   }

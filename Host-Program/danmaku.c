@@ -662,14 +662,15 @@ void SubMain()
     pthread_t overlay_thread;
 
     DanmakuHW_GetFrameSize(hDriver, &screen_height, &screen_width);
-    printf("screen: %d * %d\n", screen_width, screen_height);
 
     if (screen_width < 100 || screen_height < 100
         || screen_width%4!=0 || screen_height%4!=0) {
-        printf("invalid size detected\n");
+        if(screen_width!=0 && screen_height !=0)
+            printf("unsupported size %d * %d detected\n", screen_width, screen_height);
         usleep(200000);
         return;
     }
+    printf("screen: %d * %d\n", screen_width, screen_height);
 
     img_size = (((screen_width + 2) * screen_height) + 3) & (~3);
     // PCIE_Write32(hDriver, PCIE_USER_BAR, REG_IMGSIZE, (uint32_t)img_size);

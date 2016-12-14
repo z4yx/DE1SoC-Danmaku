@@ -1,0 +1,13 @@
+[Unit]
+Description=Danmaku Render
+Requires=danmaku-fetcher.service
+
+[Service]
+Type=simple
+PIDFile=/var/run/render.pid
+WorkingDirectory=/root/Host-Program
+ExecStart=/bin/sh -c '/root/Host-Program/danmaku </tmp/danmaku.fifo'
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

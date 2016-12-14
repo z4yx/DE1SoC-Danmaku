@@ -3,10 +3,14 @@
 ###
 exec coffee $0 "$@"
 ###
+sleep = require('sleep');
 
 token = "cb561cb3cd0ddff31551f4b49608639e56aad80d"
 
-nowId = (new Date).getTime()
+# waiting for correct system time
+while((nowId = (new Date).getTime()) < 1451606400000)
+  console.error 'nowId='+nowId
+  sleep.sleep(5)
 
 api = "http://c.n9.vc/app/screen"
 
