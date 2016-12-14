@@ -13,13 +13,13 @@ module soc_system_render_dma (
 		input  wire [63:0]  mm_read_readdata,             //                 .readdata
 		input  wire         mm_read_waitrequest,          //                 .waitrequest
 		input  wire         mm_read_readdatavalid,        //                 .readdatavalid
-		output wire [3:0]   mm_read_burstcount,           //                 .burstcount
+		output wire [6:0]   mm_read_burstcount,           //                 .burstcount
 		output wire [31:0]  mm_write_address,             //         mm_write.address
 		output wire         mm_write_write,               //                 .write
 		output wire [7:0]   mm_write_byteenable,          //                 .byteenable
 		output wire [63:0]  mm_write_writedata,           //                 .writedata
 		input  wire         mm_write_waitrequest,         //                 .waitrequest
-		output wire [3:0]   mm_write_burstcount,          //                 .burstcount
+		output wire [6:0]   mm_write_burstcount,          //                 .burstcount
 		input  wire         clock_clk,                    //            clock.clk
 		input  wire         reset_n_reset_n,              //          reset_n.reset_n
 		input  wire [31:0]  csr_writedata,                //              csr.writedata
@@ -116,12 +116,12 @@ module soc_system_render_dma (
 		.SYMBOL_WIDTH              (8),
 		.NUMBER_OF_SYMBOLS         (8),
 		.NUMBER_OF_SYMBOLS_LOG2    (3),
-		.MAX_BURST_COUNT_WIDTH     (4),
+		.MAX_BURST_COUNT_WIDTH     (7),
 		.UNALIGNED_ACCESSES_ENABLE (1),
 		.ONLY_FULL_ACCESS_ENABLE   (0),
 		.BURST_WRAPPING_SUPPORT    (0),
 		.PROGRAMMABLE_BURST_ENABLE (0),
-		.MAX_BURST_COUNT           (8),
+		.MAX_BURST_COUNT           (64),
 		.FIFO_SPEED_OPTIMIZATION   (1),
 		.STRIDE_WIDTH              (1)
 	) read_mstr_internal (
@@ -166,12 +166,12 @@ module soc_system_render_dma (
 		.SYMBOL_WIDTH                   (8),
 		.NUMBER_OF_SYMBOLS              (8),
 		.NUMBER_OF_SYMBOLS_LOG2         (3),
-		.MAX_BURST_COUNT_WIDTH          (4),
+		.MAX_BURST_COUNT_WIDTH          (7),
 		.UNALIGNED_ACCESSES_ENABLE      (1),
 		.ONLY_FULL_ACCESS_ENABLE        (0),
 		.BURST_WRAPPING_SUPPORT         (0),
 		.PROGRAMMABLE_BURST_ENABLE      (0),
-		.MAX_BURST_COUNT                (8),
+		.MAX_BURST_COUNT                (64),
 		.FIFO_SPEED_OPTIMIZATION        (1),
 		.STRIDE_WIDTH                   (1),
 		.ACTUAL_BYTES_TRANSFERRED_WIDTH (32)

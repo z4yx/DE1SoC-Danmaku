@@ -193,14 +193,14 @@ module ghrd_top(
 
 
       ///////// VGA /////////
-      output      [7:0]  VGA_B,
-      output             VGA_BLANK_N,
+      output reg  [7:0]  VGA_B,
+      output reg         VGA_BLANK_N,
       output             VGA_CLK,
-      output      [7:0]  VGA_G,
-      output             VGA_HS,
-      output      [7:0]  VGA_R,
+      output reg  [7:0]  VGA_G,
+      output reg         VGA_HS,
+      output reg  [7:0]  VGA_R,
       output             VGA_SYNC_N,
-      output             VGA_VS
+      output reg         VGA_VS
 );
 
 //=======================================================
@@ -454,7 +454,8 @@ wire pixel_fifo_empty_ext;
 wire pixel_fifo_empty_int;
 
 reg sw_debug, sw_en_overlay, sw_pattern_pause, sw_blank, sw_test_pattern;
-wire vga_de;
+wire vga_de,vga_hs,vga_vs;
+wire [7:0] pixel_r_o,pixel_g_o,pixel_b_o;
 wire pixel_clk_o;
 
 assign pixel_fifo_data = sw_test_pattern ? pixel_fifo_data_int : pixel_fifo_data_ext;
@@ -480,12 +481,12 @@ danmaku_overlay overlay_logic_1(
    .noDebug(~sw_debug), 
 
    .pixel_clk_o(pixel_clk_o),
-   .vsync_o(VGA_VS),
-   .hsync_o(VGA_HS),
+   .vsync_o(vga_vs),
+   .hsync_o(vga_hs),
    .de_o(vga_de),
-   .pixel_r_o(VGA_R),
-   .pixel_g_o(VGA_G),
-   .pixel_b_o(VGA_B),
+   .pixel_r_o(pixel_r_o),
+   .pixel_g_o(pixel_g_o),
+   .pixel_b_o(pixel_b_o),
    .fifoRdclk(pixel_fifo_clk),
    .fifoRdreq(pixel_fifo_req),
 
@@ -504,9 +505,17 @@ danmaku_overlay overlay_logic_1(
 
 );
 
-assign VGA_BLANK_N = vga_de && !sw_blank;
+always@(posedge pixel_clk_o)begin
+	VGA_HS<=vga_hs;
+	VGA_VS<=vga_vs;
+	VGA_BLANK_N <= vga_de && !sw_blank;
+	VGA_R <= pixel_r_o;
+	VGA_G <= pixel_g_o;
+	VGA_B <= pixel_b_o;
+end
+
 assign VGA_SYNC_N = 1'b1;
-assign VGA_CLK = ~pixel_clk_o;
+assign VGA_CLK = pixel_clk_o;
 
 pixel_data_adapter dma2overlay(
   .rst_n     (hps_fpga_reset_n),

@@ -488,7 +488,7 @@ module soc_system_mm_interconnect_5 (
 		.src0_endofpacket   (cmd_demux_src0_endofpacket)                      //          .endofpacket
 	);
 
-	soc_system_mm_interconnect_4_cmd_mux cmd_mux (
+	soc_system_mm_interconnect_3_cmd_mux cmd_mux (
 		.clk                 (hps_0_h2f_user0_clock_clk),                      //       clk.clk
 		.reset               (render_dma_reset_n_reset_bridge_in_reset_reset), // clk_reset.reset
 		.src_ready           (cmd_mux_src_ready),                              //       src.ready
@@ -522,7 +522,7 @@ module soc_system_mm_interconnect_5 (
 		.src0_endofpacket   (rsp_demux_src0_endofpacket)                      //          .endofpacket
 	);
 
-	soc_system_mm_interconnect_4_rsp_mux rsp_mux (
+	soc_system_mm_interconnect_3_rsp_mux rsp_mux (
 		.clk                 (hps_0_h2f_user0_clock_clk),                      //       clk.clk
 		.reset               (render_dma_reset_n_reset_bridge_in_reset_reset), // clk_reset.reset
 		.src_ready           (rsp_mux_src_ready),                              //       src.ready
@@ -539,7 +539,7 @@ module soc_system_mm_interconnect_5 (
 		.sink0_endofpacket   (rsp_demux_src0_endofpacket)                      //          .endofpacket
 	);
 
-	soc_system_mm_interconnect_4_avalon_st_adapter #(
+	soc_system_mm_interconnect_3_avalon_st_adapter #(
 		.inBitsPerSymbol (66),
 		.inUsePackets    (0),
 		.inDataWidth     (66),
