@@ -19,7 +19,7 @@ int opt_dpi = 96*4;
 int opt_runs = 1;
 PangoGravity opt_gravity = PANGO_GRAVITY_SOUTH;
 PangoGravityHint opt_gravity_hint = PANGO_GRAVITY_HINT_NATURAL;
-const char *opt_font = "Source Han Sans CN";
+const char *opt_font = "Source Han Sans CN,EmojiOne Color"; //Chinese and Emoji
 static const char* text = "hello world";
 const char* opt_output = "test.pgm";
 
