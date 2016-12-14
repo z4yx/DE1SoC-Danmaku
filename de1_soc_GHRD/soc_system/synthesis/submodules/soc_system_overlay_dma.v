@@ -43,7 +43,7 @@ module soc_system_overlay_dma (
 		.MODE                        (1),
 		.RESPONSE_PORT               (2),
 		.DESCRIPTOR_INTERFACE        (0),
-		.DESCRIPTOR_FIFO_DEPTH       (32),
+		.DESCRIPTOR_FIFO_DEPTH       (8),
 		.ENHANCED_FEATURES           (0),
 		.DESCRIPTOR_WIDTH            (128),
 		.DESCRIPTOR_BYTEENABLE_WIDTH (16)
@@ -89,7 +89,7 @@ module soc_system_overlay_dma (
 	read_master #(
 		.DATA_WIDTH                (64),
 		.LENGTH_WIDTH              (24),
-		.FIFO_DEPTH                (2048),
+		.FIFO_DEPTH                (4096),
 		.STRIDE_ENABLE             (0),
 		.BURST_ENABLE              (1),
 		.PACKET_ENABLE             (0),
@@ -100,7 +100,7 @@ module soc_system_overlay_dma (
 		.BYTE_ENABLE_WIDTH         (8),
 		.BYTE_ENABLE_WIDTH_LOG2    (3),
 		.ADDRESS_WIDTH             (32),
-		.FIFO_DEPTH_LOG2           (11),
+		.FIFO_DEPTH_LOG2           (12),
 		.SYMBOL_WIDTH              (8),
 		.NUMBER_OF_SYMBOLS         (8),
 		.NUMBER_OF_SYMBOLS_LOG2    (3),
