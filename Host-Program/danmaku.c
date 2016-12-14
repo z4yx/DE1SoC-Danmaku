@@ -38,9 +38,11 @@ int screen_height; // screen height in pixels
 int img_size;
 int error; // last error code
 volatile int render_running, sigint;
+volatile int button_ip_click;
 
 uint8_t *blank_screen;
 uint32_t blank_screen_phy;
+
 
 int strlen_utf8_c(char *s) {
    int i = 0, j = 0;
@@ -462,6 +464,32 @@ void Push(queen_t *queen, inp_char_t *src)
 
 queen_t sliding_queen, static_queen;
 
+void BtnEventHandle(void)
+{
+    if(button_ip_click){
+        button_ip_click = 0;
+        const char* cmd[] = {"ip a s dev eth0 |grep inet", "ip r |grep default"};
+        for (int i = 0; i < sizeof(cmd)/sizeof(cmd[0]); ++i)
+        {
+            FILE * out = popen(cmd[i],"r");
+            if(!out)
+                continue;
+            printf("out=%p\n", out);
+            for(;!feof(out);){
+                const char *p = input_buf;
+                if(!fgets(input_buf, MAX_TEXT_LEN, out))
+                    break;
+                while(*p!='\0' && *p<=' ')p++;
+                printf("got '%s'\n", p);
+                if(strlen(p)>8)
+                    Push(&static_queen, p);
+                else
+                    break;
+            }
+            pclose(out);
+        }
+    }
+}
 void RenderOnce(uint8_t* buf)
 {
     ClearScreen(buf);
@@ -470,6 +498,7 @@ void RenderOnce(uint8_t* buf)
     inp_char_t *ret = fgets(input_buf, MAX_TEXT_LEN, stdin);
     if (ret == NULL) {
         // printf("nothing fetched\n");
+        BtnEventHandle();
     } else {
         // printf("fetched:\n");
         // fputws(input_buf + 1, stdout);
