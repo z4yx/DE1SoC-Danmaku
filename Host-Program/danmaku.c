@@ -19,6 +19,7 @@
 
 #include "render.h"
 #include "ring.h"
+#include "gpios.h"
 #include "constants.h"
 
 // #define PROFILE_PRINT
@@ -468,14 +469,15 @@ void BtnEventHandle(void)
 {
     if(button_ip_click){
         button_ip_click = 0;
-        const char* cmd[] = {"ip a s dev eth0 |grep inet", "ip r |grep default"};
+        const char* cmd[] = {"ip a s dev eth0 |grep inet", "ip r |grep default", "ip -6 r |grep default"};
+        int line_limit = 2;
         for (int i = 0; i < sizeof(cmd)/sizeof(cmd[0]); ++i)
         {
             FILE * out = popen(cmd[i],"r");
             if(!out)
                 continue;
             printf("out=%p\n", out);
-            for(;!feof(out);){
+            for(int j=0;j<line_limit && !feof(out);j++){
                 const char *p = input_buf;
                 if(!fgets(input_buf, MAX_TEXT_LEN, out))
                     break;
@@ -742,10 +744,14 @@ int main()
         exit(1);
     }
 
+    pthread_t gpio_thread;
+    pthread_create(&gpio_thread, NULL, Thread4Button, NULL);
 
     while (!sigint) {
         SubMain();
     }
+
+    pthread_join(gpio_thread, NULL);
 
     /* Clean up and exit */
     pthread_mutex_destroy(&render_overlay_mutex);

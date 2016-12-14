@@ -5,7 +5,7 @@ LDFLAGS += -pthread
 
 LIBS +=  `pkg-config --libs freetype2 glib-2.0 pango fontconfig pangoft2`
 
-$(TARGET): danmaku_driver.o danmaku.o ring.o render.o
+$(TARGET): danmaku_driver.o danmaku.o ring.o render.o gpios.o
 
 	$(CC) -o $@ $(LDFLAGS) $^ $(LIBS)
 	
