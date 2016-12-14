@@ -1,5 +1,5 @@
 TARGET = danmaku
-CFLAGS += $(CFLAGS_EXTRA) -std=gnu99 `pkg-config glib-2.0 pango fontconfig pangoft2 freetype2 --cflags` -g3
+CFLAGS += $(CFLAGS_EXTRA) -O2 -std=gnu99 `pkg-config glib-2.0 pango fontconfig pangoft2 freetype2 --cflags` -g3
 
 LDFLAGS += -pthread
 

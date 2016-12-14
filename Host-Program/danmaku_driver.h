@@ -13,7 +13,7 @@ int DanmakuHW_OverlayBusy(DANMAKU_HW_HANDLE h);
 void DanmakuHW_LoadEDID(DANMAKU_HW_HANDLE h, uint8_t* content, uint32_t length);
 uintptr_t DanmakuHW_GetFrameBuffer(DANMAKU_HW_HANDLE h, int buf_index);
 void DanmakuHW_GetFrameSize(DANMAKU_HW_HANDLE h, unsigned int* height, unsigned int* width);
-void DanmakuHW_RenderStartDMA(DANMAKU_HW_HANDLE h,uintptr_t dst, uintptr_t src, uint32_t length);
+int DanmakuHW_RenderStartDMA(DANMAKU_HW_HANDLE h,uintptr_t dst, uintptr_t src, uint32_t length);
 int DanmakuHW_RenderDMAIdle(DANMAKU_HW_HANDLE h);
 void DanmakuHW_AllocRenderBuf(DANMAKU_HW_HANDLE h,uintptr_t *uaddr, uintptr_t *paddr, uint32_t length);
 

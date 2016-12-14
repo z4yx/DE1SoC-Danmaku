@@ -21,7 +21,7 @@
 // parameters
 #define FONT_FILE_PATH "SourceHanSansCN-Bold.otf"
 #define CYCLE_PER_DANMU    384
-#define DURATION           100
+#define DURATION           300
 
 #define MAX_IMG_SIZE ((((MAX_WIDTH + 2) * MAX_SCREEN_HEIGHT) + 3) & (~3))
 #define FRAME_BUFFER_SIZE MAX_IMG_SIZE

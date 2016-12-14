@@ -37,7 +37,7 @@ int screen_width; // screen width in pixels
 int screen_height; // screen height in pixels
 int img_size;
 int error; // last error code
-volatile int render_running;
+volatile int render_running, sigint;
 
 uint8_t *blank_screen;
 uint32_t blank_screen_phy;
@@ -53,6 +53,7 @@ int strlen_utf8_c(char *s) {
 
 void intHandler(int dummy) {
     render_running = 0;
+    sigint = 1;
 }
 
 char PrintPixel(uint8_t n)
@@ -227,7 +228,8 @@ void SlidingWritePixels(uint8_t *dst, sliding_layer_t *s)
     for (int i = 0; i < edge; i++) {
         uint32_t addr_xfrom = (line_base + xfrom);
         uint32_t addr_xto = (line_base + xto);
-        DanmakuHW_RenderStartDMA(hDriver, &dst[addr_xfrom], &s->map_phy[i][src_x], addr_xto - addr_xfrom + 1);
+        while(render_running && DanmakuHW_RenderStartDMA(hDriver, &dst[addr_xfrom], &s->map_phy[i][src_x], addr_xto - addr_xfrom + 1)<0)
+            pthread_yield();
         line_base += (screen_width + 2);
     }
 }
@@ -263,14 +265,17 @@ void ClearScreen(uint8_t *dst)
     /*
     for (int i = blocks-1; i >= 0; --i)
     {
-        DanmakuHW_RenderStartDMA(hDriver, dst+blk_size*i, blank_screen_phy+blk_size*i, blk_size);
+        while(render_running && DanmakuHW_RenderStartDMA(hDriver, dst+blk_size*i, blank_screen_phy+blk_size*i, blk_size)<0)
+        pthread_yield();
         // usleep(100);
     }
     if(img_size%blocks!=0){
-        DanmakuHW_RenderStartDMA(hDriver, dst+blk_size*blocks, blank_screen_phy+blk_size*blocks, img_size%blocks);
+        while(render_running && DanmakuHW_RenderStartDMA(hDriver, dst+blk_size*blocks, blank_screen_phy+blk_size*blocks, img_size%blocks)<0)
+        pthread_yield();
     }
     */
-    DanmakuHW_RenderStartDMA(hDriver, dst, blank_screen_phy, img_size);
+    while(render_running && DanmakuHW_RenderStartDMA(hDriver, dst, blank_screen_phy, img_size)<0)
+        pthread_yield();
 }   
 
 
@@ -345,7 +350,8 @@ void StaticWritePixels(uint8_t *dst, static_layer_t *s)
     for (int i = 0; i < edge; i++) {
         uint32_t addr_xfrom = (line_base + xfrom);
         uint32_t addr_xto = (line_base + xto);
-        DanmakuHW_RenderStartDMA(hDriver, &dst[addr_xfrom], &s->map_phy[i][0], addr_xto - addr_xfrom + 1);
+        while(render_running && DanmakuHW_RenderStartDMA(hDriver, &dst[addr_xfrom], &s->map_phy[i][0], addr_xto - addr_xfrom + 1)<0)
+            pthread_yield();
         line_base += (screen_width + 2);
     }
 }
@@ -531,6 +537,17 @@ void RenderOnce(uint8_t* buf)
     }
 }
 
+int ResolutionChanged(void)
+{
+    int height,width;
+    DanmakuHW_GetFrameSize(hDriver, &height, &width);
+    if(height!=screen_height || width!=screen_width){
+        printf("screen changed: %d * %d\n", width, height);
+        return 1;
+    }
+    return 0;
+}
+
 void Render()
 {
     struct timespec begin, end;
@@ -541,8 +558,11 @@ void Render()
     render_running = 1;
     while (render_running) {
         int idx;
-        while(RingSize() >= NUM_FRAME_BUFFER-1);
-        while((idx = GetEmptyBuffer()) == -1);
+        //Keep at least one empty buffer
+        while(RingSize() >= NUM_FRAME_BUFFER-1)
+            pthread_yield();
+        while((idx = GetEmptyBuffer()) == -1)
+            pthread_yield();
 #ifdef SIM_MODE
         uint8_t fb[MAX_IMG_SIZE];
 #else
@@ -552,13 +572,18 @@ void Render()
         clock_gettime(CLOCK_MONOTONIC, &begin);
 #endif
         RenderOnce((uint8_t*)fb);
-        while(render_running && !DanmakuHW_RenderDMAIdle(hDriver));
+        while(render_running && !DanmakuHW_RenderDMAIdle(hDriver))
+            pthread_yield();
 #ifdef PROFILE_PRINT
         clock_gettime(CLOCK_MONOTONIC, &end);
         printf("render %d done, %lf\n", 
             idx, end.tv_sec - begin.tv_sec + 1e-9*(end.tv_nsec - begin.tv_nsec));
 #endif
         CommitBuffer();
+
+        if(ResolutionChanged()){
+            render_running = 0;
+        }
     }
     render_running = 0;
     pthread_mutex_unlock(&render_overlay_mutex);
@@ -576,7 +601,9 @@ void *Thread4Overlay(void *t)
     for(;render_running;){
         DanmakuHW_FrameBufferTxmit(hDriver, idx, img_size);
 
-        while(render_running && DanmakuHW_PendingTxmit(hDriver));
+        while(render_running && DanmakuHW_PendingTxmit(hDriver))
+            pthread_yield();
+        //Keep at least one filled buffer
         if(RingSize() > 2){
             //render done, switching buffer
 #ifdef PROFILE_PRINT
@@ -606,9 +633,10 @@ void SubMain()
     DanmakuHW_GetFrameSize(hDriver, &screen_height, &screen_width);
     printf("screen: %d * %d\n", screen_width, screen_height);
 
-    if (screen_width < 100 || screen_height < 100) {
+    if (screen_width < 100 || screen_height < 100
+        || screen_width%4!=0 || screen_height%4!=0) {
         printf("invalid size detected\n");
-        usleep(1000);
+        usleep(200000);
         return;
     }
 
@@ -631,6 +659,8 @@ void SubMain()
     signal(SIGINT, intHandler);
     Render();
 
+    // pthread_kill(overlay_thread, SIGINT);
+    pthread_join(overlay_thread, NULL);
     pthread_attr_destroy(&attr);
 
     ClearFontMap();
@@ -684,9 +714,9 @@ int main()
     }
 
 
-    // while (true) {
+    while (!sigint) {
         SubMain();
-    // }
+    }
 
     /* Clean up and exit */
     pthread_mutex_destroy(&render_overlay_mutex);
