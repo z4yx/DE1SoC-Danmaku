@@ -1,11 +1,11 @@
 TARGET = danmaku
-CFLAGS += $(CFLAGS_EXTRA) -std=c11 `pkg-config freetype2 --cflags` -g3
+CFLAGS += $(CFLAGS_EXTRA) -O2 -std=gnu99 `pkg-config glib-2.0 pango fontconfig pangoft2 freetype2 --cflags` -g3
 
 LDFLAGS += -pthread
 
-LIBS +=  `pkg-config freetype2 --libs-only-L` `pkg-config freetype2 --libs-only-l` `pkg-config freetype2 --libs-only-other` 
+LIBS +=  `pkg-config --libs freetype2 glib-2.0 pango fontconfig pangoft2`
 
-$(TARGET): danmaku_driver.o danmaku.o ring.o
+$(TARGET): danmaku_driver.o danmaku.o ring.o render.o gpios.o
 
 	$(CC) -o $@ $(LDFLAGS) $^ $(LIBS)
 	

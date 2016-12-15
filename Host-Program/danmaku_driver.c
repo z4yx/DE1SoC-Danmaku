@@ -38,8 +38,8 @@ void start_udmabuf(void)
 
 void sdram_qos_settings(driver_ctx* ctx)
 {
-    int PRIO[10] = {6,5,5,0,0,0,7,7,7,7};
-    int WEIGHTS[10] = {24,0,0,1,1,1,16,16,15,15};
+    int PRIO[10] = {6,6,6,0,0,0,7,7,7,7};
+    int WEIGHTS[10] = {24,6,6,1,1,1,16,16,15,15};
     int SUM[8] = {0};
 
     uintptr_t sdr_base = 
@@ -244,7 +244,7 @@ uintptr_t DanmakuHW_GetFrameBuffer(DANMAKU_HW_HANDLE h, int buf_index)
     assert(buf_index >= 0 && buf_index < NUM_FRAME_BUFFER);
     return ctx->paddr_fb+buf_index*FRAME_BUFFER_SIZE;
 }
-void DanmakuHW_RenderStartDMA(DANMAKU_HW_HANDLE h,uintptr_t dst, uintptr_t src, uint32_t length)
+int DanmakuHW_RenderStartDMA(DANMAKU_HW_HANDLE h,uintptr_t dst, uintptr_t src, uint32_t length)
 {
     driver_ctx* ctx = (driver_ctx*)h;
     uintptr_t dma_csr = ctx->uaddr_perph_base+0x200;
@@ -254,15 +254,15 @@ void DanmakuHW_RenderStartDMA(DANMAKU_HW_HANDLE h,uintptr_t dst, uintptr_t src, 
     //     __func__, dst, src, length);
     // printf("DMA status: 0x%x\n",*REG_OFF32(dma_csr, 0));
     while(*REG_OFF32(dma_csr, 0) & 4){
-        pthread_yield();
         // printf("render DMA full, 0x%x\n",*REG_OFF32(dma_csr, 0));
-
+        return -1;
     }
     *REG_OFF32(dma_csr, 1) = 0; //Control
     *REG_OFF32(dma_desc, 0) = src; //Read Address
     *REG_OFF32(dma_desc, 1) = dst; //Write Address
     *REG_OFF32(dma_desc, 2) = length; //Length
     *REG_OFF32(dma_desc, 3) = 0x80000000; //Control
+    return 0;
 }
 int DanmakuHW_RenderDMAIdle(DANMAKU_HW_HANDLE h)
 {
@@ -304,7 +304,7 @@ int DanmakuHW_OverlayBusy(DANMAKU_HW_HANDLE h)
 {
     driver_ctx* ctx = (driver_ctx*)h;
     uintptr_t dma_csr = ctx->uaddr_perph_base+0x100;
-    return !(*REG_OFF32(dma_csr, 0) & 1);
+    return (*REG_OFF32(dma_csr, 0) & 1);
 }
 void DanmakuHW_GetFrameSize(DANMAKU_HW_HANDLE h, unsigned int* height, unsigned int* width)
 {
