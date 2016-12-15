@@ -221,7 +221,7 @@ void SlidingWritePixels(uint8_t *dst, sliding_layer_t *s)
     int xfrom = s->x;
     int xto = s->x + s->width - 1;
     int src_x = 0;
-    if(xfrom >= screen_width || xto < 0)
+    if(xfrom >= screen_width || xto < 0 || xto<xfrom)
         return;
     if(xfrom < 0){
         src_x = -xfrom;
@@ -346,7 +346,7 @@ void StaticWritePixels(uint8_t *dst, static_layer_t *s)
         xfrom = 0;
     }
     int xto = xfrom + s->valid_len - 1;
-    if(xfrom >= screen_width || xto < 0)
+    if(xfrom >= screen_width || xto < 0 || xto<xfrom)
         return;
     if(xfrom < 0) xfrom = 0;
     if(xto >= screen_width) xto = screen_width-1;
