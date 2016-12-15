@@ -523,7 +523,7 @@ void RenderOnce(uint8_t* buf)
                 break;
             default:
                 fprintf(stderr, "unknown type: %c\n", input_buf[0]);
-                exit(1);
+                break;
         }
     }
 
