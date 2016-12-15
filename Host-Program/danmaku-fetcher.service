@@ -4,11 +4,10 @@ After=network.target
 
 [Service]
 Type=simple
-PIDFile=/var/run/fetcher.pid
 WorkingDirectory=/root/Host-Program
 ExecStartPre=-/usr/bin/mkfifo /tmp/danmaku.fifo
 ExecStart=/bin/sh -c '/root/Host-Program/node_modules/.bin/coffee /root/Host-Program/fetcher.coffee >/tmp/danmaku.fifo'
-Restart=on-abort
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
