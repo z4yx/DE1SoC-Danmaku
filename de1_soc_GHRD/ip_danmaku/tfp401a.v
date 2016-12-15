@@ -17,28 +17,29 @@ input wire[7:0] pixel_b_in,
 
 output reg scdt_o,
 output wire odck_o,
-output wire vsync_o,
-output wire hsync_o,
-output wire de_o,
-output wire[7:0] pixel_r_o,
-output wire[7:0] pixel_g_o,
-output wire[7:0] pixel_b_o
+output reg vsync_o,
+output reg hsync_o,
+output reg de_o,
+output reg[7:0] pixel_r_o,
+output reg[7:0] pixel_g_o,
+output reg[7:0] pixel_b_o
 );
 
-assign odck_o = odck_in;
-assign vsync_o = vsync_in;
-assign hsync_o = hsync_in;
-assign de_o = de_in;
-assign pixel_b_o = pixel_b_in;
-assign pixel_r_o = pixel_r_in;
-assign pixel_g_o = pixel_g_in;
 
 reg[1:0] de_det, de_cnt;
 reg[19:0] counter;
 wire de_transition;
+assign odck_o = odck_in;
 
 always @(posedge odck_in) begin
     de_det <= {de_det[0], de_in};
+	
+	vsync_o <= vsync_in;
+	hsync_o <= hsync_in;
+	de_o <= de_in;
+	pixel_b_o <= pixel_b_in;
+	pixel_r_o <= pixel_r_in;
+	pixel_g_o <= pixel_g_in;
 end
 
 assign de_transition = de_det[1] != de_det[0];

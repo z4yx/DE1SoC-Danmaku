@@ -453,7 +453,8 @@ wire[31:0] pixel_fifo_data_int;
 wire pixel_fifo_empty_ext;
 wire pixel_fifo_empty_int;
 
-reg sw_debug, sw_en_overlay, sw_pattern_pause, sw_blank, sw_test_pattern;
+reg sw_debug, sw_en_overlay, sw_blank, sw_test_pattern;
+wire sw_pattern_pause;
 wire vga_de,vga_hs,vga_vs;
 wire [7:0] pixel_r_o,pixel_g_o,pixel_b_o;
 wire pixel_clk_o;
@@ -462,8 +463,10 @@ assign pixel_fifo_data = sw_test_pattern ? pixel_fifo_data_int : pixel_fifo_data
 assign pixel_fifo_empty = sw_test_pattern ? pixel_fifo_empty_int : pixel_fifo_empty_ext;
 
 always @(posedge odck_to_overlay) begin : proc_sw
-  {sw_pattern_pause,sw_test_pattern,sw_debug,sw_en_overlay,sw_blank} <= SW[4:0];
+  {sw_test_pattern,sw_debug,sw_en_overlay,sw_blank} <= SW[3:0];
 end
+
+assign sw_pattern_pause = SW[4];
 
 danmaku_overlay overlay_logic_1(
    .rst(hps_fpga_reset_n),
