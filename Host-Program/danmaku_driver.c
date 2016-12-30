@@ -31,7 +31,7 @@ typedef struct{
 
 void start_udmabuf(void)
 {
-    system("rmmod udmabuf");
+    // system("rmmod udmabuf");
     system("modprobe udmabuf udmabuf0=16777216 udmabuf1=67108864");
     system("echo 6 >/sys/class/udmabuf/udmabuf1/sync_mode");
 }
@@ -269,6 +269,12 @@ int DanmakuHW_RenderDMAIdle(DANMAKU_HW_HANDLE h)
     driver_ctx* ctx = (driver_ctx*)h;
     uintptr_t dma_csr = ctx->uaddr_perph_base+0x200;
     return ((*REG_OFF32(dma_csr, 0) & 3) == 2);
+}
+uint32_t DanmakuHW_RenderDMAStatus(DANMAKU_HW_HANDLE h)
+{
+    driver_ctx* ctx = (driver_ctx*)h;
+    uintptr_t dma_csr = ctx->uaddr_perph_base+0x200;
+    return *REG_OFF32(dma_csr, 0);
 }
 int DanmakuHW_FrameBufferTxmit(DANMAKU_HW_HANDLE h, int buf_index, uint32_t length)
 {

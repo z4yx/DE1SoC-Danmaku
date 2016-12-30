@@ -15,6 +15,7 @@ uintptr_t DanmakuHW_GetFrameBuffer(DANMAKU_HW_HANDLE h, int buf_index);
 void DanmakuHW_GetFrameSize(DANMAKU_HW_HANDLE h, unsigned int* height, unsigned int* width);
 int DanmakuHW_RenderStartDMA(DANMAKU_HW_HANDLE h,uintptr_t dst, uintptr_t src, uint32_t length);
 int DanmakuHW_RenderDMAIdle(DANMAKU_HW_HANDLE h);
+uint32_t DanmakuHW_RenderDMAStatus(DANMAKU_HW_HANDLE h);
 void DanmakuHW_AllocRenderBuf(DANMAKU_HW_HANDLE h,uintptr_t *uaddr, uintptr_t *paddr, uint32_t length);
 
 #endif

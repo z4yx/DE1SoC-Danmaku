@@ -502,7 +502,7 @@ void RenderOnce(uint8_t* buf)
         // printf("nothing fetched\n");
         BtnEventHandle();
     } else {
-        // printf("fetched:\n");
+        fprintf(stderr,"->%s",ret);
         // fputws(input_buf + 1, stdout);
         // int len = strlen_utf8_c(input_buf + 1);
         // printf("codes:");
@@ -586,14 +586,19 @@ void Render()
     for(int i=0; i<NUM_FRAME_BUFFER; i++)
         ClearScreen((void*)DanmakuHW_GetFrameBuffer(hDriver, i));
     while(!DanmakuHW_RenderDMAIdle(hDriver));
+    printf("render running\n");
     render_running = 1;
     while (render_running) {
         int idx;
         //Keep at least one empty buffer
-        while(RingSize() >= NUM_FRAME_BUFFER-1)
+        while(render_running && RingSize() >= NUM_FRAME_BUFFER-1)
             pthread_yield();
-        while((idx = GetEmptyBuffer()) == -1)
+        if(!render_running)
+            break;
+        while(render_running && (idx = GetEmptyBuffer()) == -1)
             pthread_yield();
+        if(!render_running)
+            break;
 #ifdef SIM_MODE
         uint8_t fb[MAX_IMG_SIZE];
 #else
@@ -625,10 +630,16 @@ void *Thread4Overlay(void *t)
     struct timespec begin, end;
     int idx;
 
-    while(!render_running);
+    while(!render_running){
+        if(sigint)
+            return 0;
+        pthread_yield();
+    }
     printf("Thread4Overlay started\n");
 
-    while((idx = GetFilledBuffer()) == -1);
+    while(render_running && (idx = GetFilledBuffer()) == -1)
+        pthread_yield();
+    printf("debug1\n");
     for(;render_running;){
         DanmakuHW_FrameBufferTxmit(hDriver, idx, img_size);
 
@@ -687,7 +698,7 @@ void SubMain()
     pthread_create(&overlay_thread, &attr, Thread4Overlay, NULL);
 #endif
 
-    // printf("begin rendering\n");
+    printf("begin rendering\n");
     signal(SIGINT, intHandler);
     Render();
 
@@ -703,12 +714,15 @@ int main()
     pthread_mutex_init(&render_overlay_mutex, NULL);
     pthread_cond_init (&render_overlay_cv, NULL);
 
+    printf("starting danmaku...\n");
+
 #ifndef SIM_MODE
     hDriver = DanmakuHW_Open();
     if (!hDriver) {
         fprintf(stderr, "DanmakuHW_Open failed\n");
         exit(1);
     }
+    printf("driver opened\n");
     {
         uint8_t edid[256];
         FILE* ef = fopen("edid_p2214.bin","rb");
@@ -720,6 +734,11 @@ int main()
         DanmakuHW_LoadEDID(hDriver, edid, len);
         fclose(ef);
     }
+    printf("edid loaded\n");
+    printf("DanmakuHW_RenderDMAStatus: %x\n", DanmakuHW_RenderDMAStatus(hDriver));
+    printf("DanmakuHW_PendingTxmit: %x\n", DanmakuHW_PendingTxmit(hDriver));
+    printf("DanmakuHW_OverlayBusy: %x\n", DanmakuHW_OverlayBusy(hDriver));
+    printf("DanmakuHW_RenderDMAIdle: %x\n", DanmakuHW_RenderDMAIdle(hDriver));
 #endif
 
     InitQueen(&sliding_queen);
