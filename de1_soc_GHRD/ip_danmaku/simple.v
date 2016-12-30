@@ -25,12 +25,15 @@ module simple(
 reg[32:0] counter;
 wire[1:0] picNum;
 wire[7:0] realAlpha;
+reg[1:0] pause_reg;
 
 always @(posedge pxlClk or negedge rst) begin
   if(!rst) begin
     counter <= 0;
+	 pause_reg <= 2'b0;
   end else begin
-    counter <= counter + pause;
+	 pause_reg <= {pause_reg[0], pause};
+    counter <= counter + pause_reg[1];
   end
 end
 
